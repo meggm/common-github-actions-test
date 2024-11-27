@@ -19,9 +19,7 @@ jobs:
       - name: Define Repository Name
         id: define_repo
         run: |
-          # Hardcoded repository name
-          #REPO="meggm/test-gofsutil-release"
-          REPO="dell/gofsutil"
+          REPO="meggm/test-gofsutil-release"
           echo "repository=$REPO" >> $GITHUB_OUTPUT
 
       - name: Get Latest Release Version
@@ -45,3 +43,21 @@ jobs:
       - name: Print Latest Release Version
         run: |
           echo "The latest release version for the repository is: ${{ steps.get_release.outputs.release_version }}"
+          
+      - name: Calculate Next Minor Version
+        id: calculate_version
+        run: |
+          RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
+          
+          # Remove 'v' prefix if present
+          VERSION="${RELEASE_VERSION#v}"
+          
+          # Split into major, minor, patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          
+          # Increment minor version
+          NEXT_MINOR=$((MINOR + 1))
+          NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
+          
+          echo "Next version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
