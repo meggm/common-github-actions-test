@@ -20,7 +20,8 @@ jobs:
         id: define_repo
         run: |
           # Hardcoded repository name
-          REPO="meggm/test-gofsutil-release"
+          #REPO="meggm/test-gofsutil-release"
+          REPO="dell/gofsutil"
           echo "repository=$REPO" >> $GITHUB_OUTPUT
 
       - name: Get Latest Release Version
