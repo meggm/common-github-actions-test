@@ -61,3 +61,8 @@ jobs:
           
           echo "Next version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+  csm-release:
+    uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
+    with:
+      release_version: ${{ steps.calculate_version.outputs.new_version }}
