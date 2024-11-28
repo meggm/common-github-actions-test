@@ -8,13 +8,15 @@
 
 # This WorkFlow is used to trigger the release of csm repos using one-click action
 
-name: Get Latest Release Version
+name: Get Latest Release Version and Trigger Release
 on:
   workflow_dispatch:
 
 jobs:
-  get-release:
+  get-release-and-trigger:
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.calculate_version.outputs.new_version }}
     steps:
       - name: Define Repository Name
         id: define_repo
@@ -27,17 +29,14 @@ jobs:
           REPO="${{ steps.define_repo.outputs.repository }}"
           echo "Fetching latest release for $REPO"
           
-          # Fetch the latest release version using GitHub API
           RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
           
-          # Handle the case where no release is found
           if [[ "$RELEASE_VERSION" == "null" ]]; then
             echo "No release found for $REPO"
-            RELEASE_VERSION="No release found"
+            RELEASE_VERSION="v0.0.0"
           fi
           echo "Latest release version: $RELEASE_VERSION"
           echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-
       - name: Print Latest Release Version
         run: |
           echo "The latest release version for the repository is: ${{ steps.get_release.outputs.release_version }}"
@@ -47,20 +46,17 @@ jobs:
         run: |
           RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
           
-          # Remove 'v' prefix if present
           VERSION="${RELEASE_VERSION#v}"
-          
-          # Split into major, minor, patch
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          
-          # Increment minor version
           NEXT_MINOR=$((MINOR + 1))
           NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
           
           echo "Next version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Trigger Release Workflow
-        uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
-        with:
-          version: ${{ steps.calculate_version.outputs.new_version }}
+  trigger-release:
+    needs: get-release-and-trigger
+    uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
+    name: Release Go Client Libraries
+    with:
+      version: ${{ needs.get-release-and-trigger.outputs.new_version }}
