@@ -56,9 +56,6 @@ jobs:
 
   trigger-release:
     needs: get-release-and-trigger
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Release Workflow
-        uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
-        with:
-          version: ${{ needs.get-release-and-trigger.outputs.new_version }}
+    uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
+    with:
+      version: ${{ needs.get-release-and-trigger.outputs.new_version }}
