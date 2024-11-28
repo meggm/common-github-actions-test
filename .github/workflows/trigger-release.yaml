@@ -22,6 +22,8 @@ jobs:
           fi
       - name: Checkout the code
         uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repo }}
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
