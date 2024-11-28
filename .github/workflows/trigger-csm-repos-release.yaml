@@ -60,6 +60,6 @@ jobs:
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Trigger Release Workflow
-        uses: ./.github/workflows/release.yml
+        uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
         with:
           version: ${{ steps.calculate_version.outputs.new_version }}
