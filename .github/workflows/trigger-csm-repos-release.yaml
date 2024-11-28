@@ -53,8 +53,8 @@ jobs:
           
           echo "Next version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          
-  csm-release:
+
+  trigger-release:
     needs: get-release-and-trigger
     runs-on: ubuntu-latest
     steps:
