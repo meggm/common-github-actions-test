@@ -1,10 +1,12 @@
 name: Release Libraries
-
 on:
   workflow_call:
     inputs:
       version:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        required: true
+      repo:
+        description: 'Repository to release, e.g., user/repo'
         required: true
 
 jobs:
@@ -15,7 +17,7 @@ jobs:
       - name: Validate version input
         run: |
           if [[ "${{ inputs.version }}" == "none" ]]; then
-            echo "Invalid version specified: ${{ inputs.version }} Must follow major, minor, patch versioning."
+            echo "Invalid version specified: ${{ inputs.version }}. Must follow major, minor, patch versioning."
             exit 1
           fi
       - name: Checkout the code
