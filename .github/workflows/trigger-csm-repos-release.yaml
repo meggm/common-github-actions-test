@@ -57,7 +57,7 @@ jobs:
 
   trigger-release:
     needs: get-release-and-trigger
-    uses: meggm/common-github-actions/.github/workflows/trigger-release.yaml@main
+    uses: meggm/common-github-actions-test/.github/workflows/trigger-release.yaml@main
     with:
       version: ${{ needs.get-release-and-trigger.outputs.new_version }}
       repo: ${{ needs.get-release-and-trigger.outputs.repo }}
