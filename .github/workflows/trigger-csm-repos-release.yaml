@@ -54,7 +54,7 @@ jobs:
           echo "Next version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-  trigger-release:
+  csm-release:
     needs: get-release-and-trigger
     uses: dell/common-github-actions/.github/workflows/csm-release-libs.yaml@main
     name: Release Go Client Libraries
