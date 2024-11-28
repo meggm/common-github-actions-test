@@ -8,7 +8,9 @@ on:
       repo:
         required: true
         type: string
-
+permissions:
+  contents: write
+  
 jobs:
   build-and-scan:
     name: Build, Scan and Release
