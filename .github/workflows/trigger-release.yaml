@@ -1,0 +1,58 @@
+name: Release Libraries
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        required: true
+
+jobs:
+  build-and-scan:
+    name: Build, Scan and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate version input
+        run: |
+          if [[ "${{ inputs.version }}" == "none" ]]; then
+            echo "Invalid version specified: ${{ inputs.version }} Must follow major, minor, patch versioning."
+            exit 1
+          fi
+      - name: Checkout the code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Build
+        run: go build -v ./...
+      - name: Run malware scan
+        uses: dell/common-github-actions/malware-scanner@main
+        with:
+          directories: .
+          options: -ri
+      - name: Create new tag
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag v${{ inputs.version }}
+          git push origin v${{ inputs.version }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Release v${{ inputs.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release branch
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout -b release/v${{ inputs.version }}
+          git push origin release/v${{ inputs.version }}
