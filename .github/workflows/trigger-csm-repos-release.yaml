@@ -61,3 +61,4 @@ jobs:
     with:
       version: ${{ needs.get-release-and-trigger.outputs.new_version }}
       repo: ${{ needs.get-release-and-trigger.outputs.repo }}
+    type: "workflow"
