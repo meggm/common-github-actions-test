@@ -55,7 +55,7 @@ jobs:
           echo "Pushing new tag to GitHub"
           curl -X POST \
             https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
       
