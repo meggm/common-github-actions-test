@@ -22,25 +22,31 @@ jobs:
             echo "Invalid version specified: ${{ inputs.version }}. Must follow major, minor, patch versioning."
             exit 1
           fi
+      
       - name: Checkout the code
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
+      
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
+      
       - name: Install dependencies
         run: go mod tidy
+      
       - name: Build
         run: go build -v ./...
+      
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
           directories: .
           options: -ri
+      
       - name: Create new tag
         run: |
           git config --global user.name 'github-actions'
@@ -49,10 +55,10 @@ jobs:
           echo "Pushing new tag to GitHub"
           curl -X POST \
             https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-            -H 'Authorization: Bearer $GITHUB_TOKEN' \
-            -H 'Content-Type: application/json' \
-            -d '{"ref": "refs/tags/v${{ inputs.version }}", "sha": "$(git rev-parse HEAD)"}'
-          #git push origin ${{ inputs.version }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
+      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -62,8 +68,10 @@ jobs:
           prerelease: false
           generate_release_notes: true
           make_latest: true
+          repository: ${{ inputs.repo }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Create release branch
         run: |
           git config --global user.name 'github-actions'
