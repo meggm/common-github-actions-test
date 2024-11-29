@@ -48,8 +48,6 @@ jobs:
           options: -ri
       
       - name: Create new tag
-        env:
-          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
@@ -57,9 +55,11 @@ jobs:
           echo "Pushing new tag to GitHub"
           curl -X POST \
             https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-            -H "Authorization: Bearer $PAT_TOKEN" \
+            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
+        env:
+          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       
       - name: Create Release
         uses: softprops/action-gh-release@v2
