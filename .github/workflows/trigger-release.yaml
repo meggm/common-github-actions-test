@@ -46,7 +46,13 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git tag ${{ inputs.version }}
-          git push origin ${{ inputs.version }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+          echo "Pushing new tag to GitHub"
+          curl -X POST \
+            https://api.github.com/repos/${{ inputs.repo }}/git/refs \
+            -H 'Authorization: Bearer $GITHUB_TOKEN' \
+            -H 'Content-Type: application/json' \
+            -d '{"ref": "refs/tags/v${{ inputs.version }}", "sha": "$(git rev-parse HEAD)"}'
+          #git push origin ${{ inputs.version }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
