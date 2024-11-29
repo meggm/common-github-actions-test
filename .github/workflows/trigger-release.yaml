@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repo }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           ref: main
       
       - name: Set up Go
@@ -48,6 +48,8 @@ jobs:
           options: -ri
       
       - name: Create new tag
+        env:
+          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
@@ -55,7 +57,7 @@ jobs:
           echo "Pushing new tag to GitHub"
           curl -X POST \
             https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: Bearer $PAT_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
       
@@ -70,11 +72,13 @@ jobs:
           make_latest: true
           repository: ${{ inputs.repo }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       
       - name: Create release branch
+        env:
+          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git checkout -b release/${{ inputs.version }}
-          git push origin release/${{ inputs.version }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }}
+          git push https://${{ github.actor }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ inputs.repo }} release/${{ inputs.version }}
