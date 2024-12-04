@@ -46,7 +46,7 @@ jobs:
         with:
           directories: .
           options: -ri
-          
+
       - name: Create Tag on Target Repo
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
@@ -107,38 +107,38 @@ jobs:
 
            echo "Draft release created for tag $TAG_NAME in $TARGET_REPO."
       
-      - name: Create new tag
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git tag ${{ inputs.version }}
-          echo "Pushing new tag to GitHub"
-          curl -X POST \
-            https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#      - name: Create new tag
+#        run: |
+#          git config --global user.name 'github-actions'
+#          git config --global user.email 'github-actions@github.com'
+#          git tag ${{ inputs.version }}
+#          echo "Pushing new tag to GitHub"
+#          curl -X POST \
+#            https://api.github.com/repos/${{ inputs.repo }}/git/refs \
+#            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+#            -H "Content-Type: application/json" \
+#            -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#
+#      - name: Create Release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          tag_name: ${{ inputs.version }}
+#          name: Release ${{ inputs.version }}
+#          draft: true
+#          prerelease: false
+#          generate_release_notes: true
+#          make_latest: true
+#          repository: ${{ inputs.repo }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.version }}
-          name: Release ${{ inputs.version }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          make_latest: true
-          repository: ${{ inputs.repo }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      
-      - name: Create release branch
-        env:
-          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout -b release/${{ inputs.version }}
-          git push https://${{ github.actor }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ inputs.repo }} release/${{ inputs.version }}
+#      - name: Create release branch
+#        env:
+#          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#        run: |
+#          git config --global user.name 'github-actions'
+#          git config --global user.email 'github-actions@github.com'
+#          git checkout -b release/${{ inputs.version }}
+#          git push https://${{ github.actor }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ inputs.repo }} release/${{ inputs.version }}
