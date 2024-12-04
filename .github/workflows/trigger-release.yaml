@@ -59,7 +59,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
         env:
-          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
       
       - name: Create Release
         uses: softprops/action-gh-release@v2
