@@ -56,7 +56,7 @@ jobs:
           VERSION_INPUT: ${{ inputs.version }}
         run: |
           # Define the tag name
-          TAG_NAME="v${{ inputs.version }}"
+          TAG_NAME="${{ inputs.version }}"
 
           # Define the target repository and branch
           TARGET_REPO="${{ inputs.repo }}"
@@ -91,7 +91,7 @@ jobs:
           VERSION_INPUT: ${{ inputs.version }}
         run: |
           # Define the tag name
-          TAG_NAME="v${{ inputs.version }}"
+          TAG_NAME="${{ inputs.version }}"
 
           # Define the target repository
           TARGET_REPO="${{ inputs.repo }}"
