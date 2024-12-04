@@ -46,6 +46,67 @@ jobs:
         with:
           directories: .
           options: -ri
+
+
+      - name: Create Tag on Target Repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          # Define the tag name
+          TAG_NAME="$VERSION_INPUT"
+
+          # Define the target repository and branch
+          TARGET_REPO= ${{ inpputs.repo }}
+          BRANCH="main" # Adjust based on the branch for the target repo
+
+          # Fetch the default branch SHA of the target repository
+          TARGET_BRANCH_SHA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$TARGET_REPO/git/ref/heads/$BRANCH" | jq -r '.object.sha')
+
+          if [ -z "$TARGET_BRANCH_SHA" ]; then
+            echo "Error: Unable to fetch the branch SHA for $BRANCH in $TARGET_REPO"
+            exit 1
+          fi
+
+          echo "Target branch SHA: $TARGET_BRANCH_SHA"
+
+         # Create the tag on the target repository
+         curl -X POST -s -H "Authorization: token $GITHUB_TOKEN" \
+           -H "Accept: application/vnd.github.v3+json" \
+           "https://api.github.com/repos/$TARGET_REPO/git/refs" \
+           -d '{
+             "ref": "refs/tags/'$TAG_NAME'",
+             "sha": "'$TARGET_BRANCH_SHA'"
+           }'
+
+         echo "Tag $TAG_NAME created successfully in $TARGET_REPO."
+
+      - name: Create Draft Release on Target Repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          # Define the tag name
+          TAG_NAME="$VERSION_INPUT"
+
+          # Define the target repository
+          TARGET_REPO=${{ inputs.repo }}
+
+          # Create the draft release
+          curl -X POST -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$TARGET_REPO/releases" \
+            -d '{
+              "tag_name": "'$TAG_NAME'",
+              "name": "'$TAG_NAME'",
+              "body": "Draft release created for version '$TAG_NAME'.",
+              "draft": true,
+              "prerelease": false
+            }'
+
+           echo "Draft release created for tag $TAG_NAME in $TARGET_REPO."
       
       - name: Create new tag
         run: |
