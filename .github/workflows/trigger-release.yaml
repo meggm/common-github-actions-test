@@ -1,4 +1,5 @@
 name: Release Libraries
+
 on:
   workflow_call:
     inputs:
@@ -8,13 +9,15 @@ on:
       repo:
         required: true
         type: string
+
 permissions:
   contents: write
-  
+
 jobs:
   build-and-scan:
-    name: Build, Scan and Release
+    name: Build, Scan, and Release
     runs-on: ubuntu-latest
+
     steps:
       - name: Validate version input
         run: |
@@ -22,25 +25,25 @@ jobs:
             echo "Invalid version specified: ${{ inputs.version }}. Must follow major, minor, patch versioning."
             exit 1
           fi
-      
+
       - name: Checkout the code
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repo }}
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-      
+
       - name: Install dependencies
         run: go mod tidy
-      
+
       - name: Build
         run: go build -v ./...
-      
+
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
@@ -53,14 +56,14 @@ jobs:
           VERSION_INPUT: ${{ inputs.version }}
         run: |
           # Define the tag name
-          TAG_NAME="$VERSION_INPUT"
+          TAG_NAME="v${{ inputs.version }}"
 
           # Define the target repository and branch
-          TARGET_REPO= ${{ inpputs.repo }}
+          TARGET_REPO="${{ inputs.repo }}"
           BRANCH="main" # Adjust based on the branch for the target repo
 
           # Fetch the default branch SHA of the target repository
-          TARGET_BRANCH_SHA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          TARGET_BRANCH_SHA=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/$TARGET_REPO/git/ref/heads/$BRANCH" | jq -r '.object.sha')
 
@@ -71,16 +74,16 @@ jobs:
 
           echo "Target branch SHA: $TARGET_BRANCH_SHA"
 
-         # Create the tag on the target repository
-         curl -X POST -s -H "Authorization: token $GITHUB_TOKEN" \
-           -H "Accept: application/vnd.github.v3+json" \
-           "https://api.github.com/repos/$TARGET_REPO/git/refs" \
-           -d '{
-             "ref": "refs/tags/'$TAG_NAME'",
-             "sha": "'$TARGET_BRANCH_SHA'"
-           }'
+          # Create the tag on the target repository
+          curl -X POST -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$TARGET_REPO/git/refs" \
+            -d '{
+              "ref": "refs/tags/'"$TAG_NAME"'",
+              "sha": "'"$TARGET_BRANCH_SHA"'"
+            }'
 
-         echo "Tag $TAG_NAME created successfully in $TARGET_REPO."
+          echo "Tag $TAG_NAME created successfully in $TARGET_REPO."
 
       - name: Create Draft Release on Target Repo
         env:
@@ -88,57 +91,21 @@ jobs:
           VERSION_INPUT: ${{ inputs.version }}
         run: |
           # Define the tag name
-          TAG_NAME="$VERSION_INPUT"
+          TAG_NAME="v${{ inputs.version }}"
 
           # Define the target repository
-          TARGET_REPO=${{ inputs.repo }}
+          TARGET_REPO="${{ inputs.repo }}"
 
           # Create the draft release
-          curl -X POST -s -H "Authorization: token $GITHUB_TOKEN" \
+          curl -X POST -s -H "Authorization: Bearer $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/$TARGET_REPO/releases" \
             -d '{
-              "tag_name": "'$TAG_NAME'",
-              "name": "'$TAG_NAME'",
-              "body": "Draft release created for version '$TAG_NAME'.",
+              "tag_name": "'"$TAG_NAME"'",
+              "name": "'"$TAG_NAME"'",
+              "body": "Draft release created for version '"$TAG_NAME"'.",
               "draft": true,
               "prerelease": false
             }'
 
-           echo "Draft release created for tag $TAG_NAME in $TARGET_REPO."
-      
-#      - name: Create new tag
-#        run: |
-#          git config --global user.name 'github-actions'
-#          git config --global user.email 'github-actions@github.com'
-#          git tag ${{ inputs.version }}
-#          echo "Pushing new tag to GitHub"
-#          curl -X POST \
-#            https://api.github.com/repos/${{ inputs.repo }}/git/refs \
-#            -H "Authorization: Bearer ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
-#            -H "Content-Type: application/json" \
-#            -d '{"ref": "refs/tags/${{ inputs.version }}", "sha": "'$(git rev-parse HEAD)'"}'
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-#
-#      - name: Create Release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          tag_name: ${{ inputs.version }}
-#          name: Release ${{ inputs.version }}
-#          draft: true
-#          prerelease: false
-#          generate_release_notes: true
-#          make_latest: true
-#          repository: ${{ inputs.repo }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      
-#      - name: Create release branch
-#        env:
-#          PAT_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-#        run: |
-#          git config --global user.name 'github-actions'
-#          git config --global user.email 'github-actions@github.com'
-#          git checkout -b release/${{ inputs.version }}
-#          git push https://${{ github.actor }}:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ inputs.repo }} release/${{ inputs.version }}
+          echo "Draft release created for tag $TAG_NAME in $TARGET_REPO."
