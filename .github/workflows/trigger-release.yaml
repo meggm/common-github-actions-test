@@ -1,111 +1,75 @@
-name: Release Libraries
+# Copyright (c) 2024 Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
 
+# This workflow is used to release libraries like gobrick, gofsutil etc.
+name: Release Go Client Libraries
+
+# Invocable as a reusable workflow
 on:
   workflow_call:
+  workflow_dispatch:
     inputs:
       version:
+        description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: true
-        type: string
-      repo:
-        required: true
-        type: string
-
-permissions:
-  contents: write
+        # TODO: remove default from here and caller workflows in goclients
+        default: 'none'
 
 jobs:
   build-and-scan:
-    name: Build, Scan, and Release
+    name: Build, Scan and Release
     runs-on: ubuntu-latest
-
     steps:
       - name: Validate version input
         run: |
-          if [[ "${{ inputs.version }}" == "none" ]]; then
-            echo "Invalid version specified: ${{ inputs.version }}. Must follow major, minor, patch versioning."
+          if [[ "${{ github.event.inputs.version }}" == "none" ]]; then
+            echo "Invalid version specified: ${{ github.event.inputs.version }} Must follow major, minor, patch versioning."
             exit 1
           fi
-
       - name: Checkout the code
         uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.repo }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          ref: main
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-
       - name: Install dependencies
         run: go mod tidy
-
       - name: Build
         run: go build -v ./...
-
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
           directories: .
           options: -ri
 
-      - name: Create Tag on Target Repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          VERSION_INPUT: ${{ inputs.version }}
+      - name: Create new tag
         run: |
-          # Define the tag name
-          TAG_NAME="${{ inputs.version }}"
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
 
-          # Define the target repository and branch
-          TARGET_REPO="${{ inputs.repo }}"
-          BRANCH="main" # Adjust based on the branch for the target repo
-
-          # Fetch the default branch SHA of the target repository
-          TARGET_BRANCH_SHA=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$TARGET_REPO/git/ref/heads/$BRANCH" | jq -r '.object.sha')
-
-          if [ -z "$TARGET_BRANCH_SHA" ]; then
-            echo "Error: Unable to fetch the branch SHA for $BRANCH in $TARGET_REPO"
-            exit 1
-          fi
-
-          echo "Target branch SHA: $TARGET_BRANCH_SHA"
-
-          # Create the tag on the target repository
-          curl -X POST -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$TARGET_REPO/git/refs" \
-            -d '{
-              "ref": "refs/tags/'"$TAG_NAME"'",
-              "sha": "'"$TARGET_BRANCH_SHA"'"
-            }'
-
-          echo "Tag $TAG_NAME created successfully in $TARGET_REPO."
-
-      - name: Create Draft Release on Target Repo
+      - name: Create Release
+        id: release_notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          VERSION_INPUT: ${{ inputs.version }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch
         run: |
-          # Define the tag name
-          TAG_NAME="${{ inputs.version }}"
-
-          # Define the target repository
-          TARGET_REPO="${{ inputs.repo }}"
-
-          # Create the draft release
-          curl -X POST -s -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$TARGET_REPO/releases" \
-            -d '{
-              "tag_name": "'"$TAG_NAME"'",
-              "name": "'"$TAG_NAME"'",
-              "body": "Draft release created for version '"$TAG_NAME"'.",
-              "draft": true,
-              "prerelease": false
-            }'
-
-          echo "Draft release created for tag $TAG_NAME in $TARGET_REPO."
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout -b release/v${{ github.event.inputs.version }}
+          git push origin release/v${{ github.event.inputs.version }}
