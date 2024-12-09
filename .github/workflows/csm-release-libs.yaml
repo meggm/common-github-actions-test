@@ -5,7 +5,6 @@
 # You may obtain a copy of the License at
 #
 #  http://www.apache.org/licenses/LICENSE-2.0
-
 name: Release Go Client Libraries
 
 on:
@@ -49,9 +48,7 @@ jobs:
           script: |
             let version;
             if ("${{ github.event.inputs.version }}" !== "none") {
-              const versionParts = "${{ github.event.inputs.version }}".split('.');
-              const minorVersion = parseInt(versionParts[1]) + 1;
-              version = `${versionParts[0]}.${minorVersion}.0`;
+              version = "${{ github.event.inputs.version }}";
             } else {
               const latestRelease = await github.repos.getLatestRelease({
                 owner: context.repo.owner,
@@ -62,6 +59,7 @@ jobs:
               const minorVersion = parseInt(versionParts[1]) + 1;
               version = `${versionParts[0]}.${minorVersion}.0`;
             }
+            console.log(`Determined version: ${version}`);
             core.setOutput('version', version);
 
       - name: Delete existing tag in remote
@@ -95,4 +93,3 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git checkout -b release/v${{ steps.determine_version.outputs.version }}
           git push origin release/v${{ steps.determine_version.outputs.version }}
-
