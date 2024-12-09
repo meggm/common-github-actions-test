@@ -10,11 +10,12 @@ name: Release Go Client Libraries
 
 on:
   workflow_call:
+  workflow_dispatch:
     inputs:
       version:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: false
-        type: string
+        default: 'none'
 
 jobs:
   build-and-scan:
@@ -47,8 +48,8 @@ jobs:
         with:
           script: |
             let version;
-            if (inputs.version) {
-              const versionParts = inputs.version.split('.');
+            if ("${{ github.event.inputs.version }}" !== "none") {
+              const versionParts = "${{ github.event.inputs.version }}".split('.');
               const minorVersion = parseInt(versionParts[1]) + 1;
               version = `${versionParts[0]}.${minorVersion}.0`;
             } else {
@@ -61,7 +62,7 @@ jobs:
               const minorVersion = parseInt(versionParts[1]) + 1;
               version = `${versionParts[0]}.${minorVersion}.0`;
             }
-            return { version };
+            core.setOutput('version', version);
 
       - name: Delete existing tag in remote
         run: |
@@ -94,3 +95,4 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git checkout -b release/v${{ steps.determine_version.outputs.version }}
           git push origin release/v${{ steps.determine_version.outputs.version }}
+
