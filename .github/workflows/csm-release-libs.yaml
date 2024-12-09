@@ -11,29 +11,25 @@
 name: Release Go Client Libraries
 
 on:
-  workflow_call:
+  workflow_dispatch:
 
 jobs:
-  compute-version:
-    name: Compute Next Version
+  increment-version:
+    name: Determine and Increment Version
     runs-on: ubuntu-latest
-
-    outputs:
-      next_version: ${{ steps.increment_version.outputs.next_version }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Determine Current Version
-        id: determine_version
+      - name: Get Current Version
+        id: get_current_version
         run: |
           CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
           echo "Current version: $CURRENT_VERSION"
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
 
       - name: Validate Current Version
-        id: validate_version
         run: |
           if [[ ! "${{ env.CURRENT_VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "No valid semantic version tag found. Defaulting to 0.0.0"
@@ -46,41 +42,10 @@ jobs:
           IFS='.' read -r -a VERSION_PARTS <<< "${{ env.CURRENT_VERSION }}"
           MAJOR_VERSION=${VERSION_PARTS[0]}
           MINOR_VERSION=${VERSION_PARTS[1]}
-          PATCH_VERSION=${VERSION_PARTS[2]}
           NEW_MINOR_VERSION=$((MINOR_VERSION + 1))
-          NEXT_VERSION="${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
-          echo "::set-output name=next_version::$NEXT_VERSION"
-          echo "Next version calculated: $NEXT_VERSION"
+          NEW_VERSION="${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
+          echo "Incremented version: $NEW_VERSION"
+          echo "::set-output name=new_version::$NEW_VERSION"
 
-  build-and-release:
-    name: Build, Tag, and Release
-    needs: compute-version
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Validate Computed Version
-        run: |
-          if [[ "${{ needs.compute-version.outputs.next_version }}" == "" ]]; then
-            echo "Error: Next version is empty."
-            exit 1
-          fi
-          echo "Using version: ${{ needs.compute-version.outputs.next_version }}"
-
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Set Up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.23"
-
-      - name: Build Project
-        run: go build -v ./...
-
-      - name: Tag Release
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git tag v${{ needs.compute-version.outputs.next_version }}
-          git push origin v${{ needs.compute-version.outputs.next_version }}
-
+      - name: Print Incremented Version
+        run: echo "The new version is: ${{ steps.increment_version.outputs.new_version }}"
