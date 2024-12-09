@@ -46,21 +46,35 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            let version;
-            if ("${{ github.event.inputs.version }}" !== "none") {
-              version = "${{ github.event.inputs.version }}";
-            } else {
-              const latestRelease = await github.repos.getLatestRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo
-              });
-              const tagName = latestRelease.data.tag_name;
-              const versionParts = tagName.split('.');
-              const minorVersion = parseInt(versionParts[1]) + 1;
-              version = `${versionParts[0]}.${minorVersion}.0`;
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+
+            async function run() {
+              let version;
+              const token = core.getInput('GITHUB_TOKEN');
+              const octokit = github.getOctokit(token);
+
+              if ("${{ github.event.inputs.version }}" !== "none") {
+                version = "${{ github.event.inputs.version }}";
+              } else {
+                const latestRelease = await octokit.rest.repos.getLatestRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo
+                });
+                const tagName = latestRelease.data.tag_name;
+                const versionParts = tagName.replace(/^v/, '').split('.');
+                const minorVersion = parseInt(versionParts[1]) + 1;
+                version = `${versionParts[0]}.${minorVersion}.0`;
+              }
+              console.log(`Determined version: ${version}`);
+              core.setOutput('version', version);
             }
-            console.log(`Determined version: ${version}`);
-            core.setOutput('version', version);
+
+            run().catch(error => {
+              core.setFailed(error.message);
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete existing tag in remote
         run: |
