@@ -7,45 +7,69 @@
 #  http://www.apache.org/licenses/LICENSE-2.0
 
 # This workflow is used to release libraries like gobrick, gofsutil etc.
-
 name: Release Go Client Libraries
 
+# Invocable as a reusable workflow
 on:
+  workflow_call:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        required: true
+        # TODO: remove default from here and caller workflows in goclients
+        default: 'none'
 
 jobs:
-  increment-version:
-    name: Determine and Increment Version
+  build-and-scan:
+    name: Build, Scan and Release
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Get Current Version
-        id: get_current_version
+      - name: Validate version input
         run: |
-          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-          echo "Current version: $CURRENT_VERSION"
-          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
-
-      - name: Validate Current Version
-        run: |
-          if [[ ! "${{ env.CURRENT_VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "No valid semantic version tag found. Defaulting to 0.0.0"
-            echo "CURRENT_VERSION=0.0.0" >> $GITHUB_ENV
+          if [[ "${{ github.event.inputs.version }}" == "none" ]]; then
+            echo "Invalid version specified: ${{ github.event.inputs.version }} Must follow major, minor, patch versioning."
+            exit 1
           fi
+      - name: Checkout the code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Build
+        run: go build -v ./...
+      - name: Run malware scan
+        uses: dell/common-github-actions/malware-scanner@main
+        with:
+          directories: .
+          options: -ri
 
-      - name: Increment Minor Version
-        id: increment_version
+      - name: Create new tag
         run: |
-          IFS='.' read -r -a VERSION_PARTS <<< "${{ env.CURRENT_VERSION }}"
-          MAJOR_VERSION=${VERSION_PARTS[0]}
-          MINOR_VERSION=${VERSION_PARTS[1]}
-          NEW_MINOR_VERSION=$((MINOR_VERSION + 1))
-          NEW_VERSION="${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
-          echo "Incremented version: $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
 
-      - name: Print Incremented Version
-        run: echo "The new version is:${{steps.increment_version.outputs.new_version}}"
+      - name: Create Release
+        id: release_notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout -b release/v${{ github.event.inputs.version }}
+          git push origin release/v${{ github.event.inputs.version }}
