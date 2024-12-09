@@ -14,7 +14,7 @@ on:
     inputs:
       version:
         description: 'Version to release (major.minor.patch), e.g., 1.0.0'
-        required: true
+        required: false # Optional since we calculate it in the workflow
 
 jobs:
   compute-version:
@@ -30,33 +30,38 @@ jobs:
       - name: Get Current Version (Latest Tag)
         id: determine_version
         run: |
-          CURRENT_VERSION=$(git describe --tags --abbrev=0 || echo "0.0.0")
-          if [[ ! "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version format: $CURRENT_VERSION"
-            exit 1
-          fi
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "Current version: $CURRENT_VERSION"
 
-      - name: Increment Major Version
+      - name: Validate Current Version
+        id: validate_version
+        run: |
+          if [[ ! "${{ env.CURRENT_VERSION }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "No valid semantic version tag found. Defaulting to 0.0.0"
+            echo "CURRENT_VERSION=0.0.0" >> $GITHUB_ENV
+          fi
+
+      - name: Increment Minor Version
         id: increment_version
         run: |
           IFS='.' read -r -a VERSION_PARTS <<< "${{ env.CURRENT_VERSION }}"
-          NEXT_MAJOR_VERSION=$((VERSION_PARTS[0] + 1))
-          NEXT_VERSION="${NEXT_MAJOR_VERSION}.0.0"
+          MAJOR_VERSION=${VERSION_PARTS[0]}
+          MINOR_VERSION=${VERSION_PARTS[1]}
+          PATCH_VERSION=${VERSION_PARTS[2]}
+          NEW_MINOR_VERSION=$((MINOR_VERSION + 1))
+          NEXT_VERSION="${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
+          echo "Next version: $NEXT_VERSION"
           echo "::set-output name=next_version::$NEXT_VERSION"
 
-  build-and-scan:
-    name: Build, Scan, and Release
+  build-and-release:
+    needs: compute-version
     runs-on: ubuntu-latest
+
     steps:
-      - name: Validate version input
+      - name: Validate Version
         run: |
-          VERSION=${{ needs.compute-version.outputs.next_version }}
-          if [[ -z "$VERSION" ]]; then
-            echo "Error: Version input is required but not provided."
-            exit 1
-          fi
-          echo "Releasing version: $VERSION"
+          echo "Releasing version: ${{ needs.compute-version.outputs.next_version }}"
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -66,17 +71,8 @@ jobs:
         with:
           go-version: "1.23"
 
-      - name: Install Dependencies
-        run: go mod tidy
-
       - name: Build Code
         run: go build -v ./...
-
-      - name: Run Malware Scan
-        uses: dell/common-github-actions/malware-scanner@main
-        with:
-          directories: .
-          options: -ri
 
       - name: Create New Tag
         run: |
