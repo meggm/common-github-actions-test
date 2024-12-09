@@ -89,17 +89,20 @@ jobs:
           echo "::set-output name=image_name::$IMAGE_NAME"
 
       - name: Pull nightly image from Quay.io
-        run: docker pull quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly
+        #run: docker pull quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly
+        run: echo "dummy pull"
 
       - name: Retag image for Quay.io
-        run: |
-          docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:v${{ steps.calculate_version.outputs.new_version }}
-          docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:latest
+        #run: |
+        #  docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:v${{ steps.calculate_version.outputs.new_version }}
+        #  docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:latest
+        run: echo "dummy retag for Quay.io"
 
       - name: Retag image for Docker Hub
-        run: |
-          docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly dellemc/${{ steps.extract_image.outputs.image_name }}:v${{ steps.calculate_version.outputs.new_version }}
-          docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly dellemc/${{ steps.extract_image.outputs.image_name }}:latest
+        #run: |
+        #  docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly dellemc/${{ steps.extract_image.outputs.image_name }}:v${{ steps.calculate_version.outputs.new_version }}
+        #  docker tag quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly dellemc/${{ steps.extract_image.outputs.image_name }}:latest
+        run: echo "dummy retag for Docker Hub"
 
       - name: Push ${{ steps.calculate_version.outputs.new_version }} and latest tag to Quay.io
         run: echo "Dummy push"
