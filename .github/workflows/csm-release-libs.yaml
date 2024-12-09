@@ -68,22 +68,22 @@ jobs:
 
       - name: Delete existing tag in remote
         run: |
-          git tag -d v${{ steps.calculate_version.outputs.new_version }} || true
-          git push --delete origin v${{ steps.calculate_version.outputs.new_version }} || true
+          git tag -d ${{ steps.calculate_version.outputs.new_version }} || true
+          git push --delete origin ${{ steps.calculate_version.outputs.new_version }} || true
 
       - name: Create new tag
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag v${{ steps.calculate_version.outputs.new_version }}
-          git push origin v${{ steps.calculate_version.outputs.new_version }}
+          git tag ${{ steps.calculate_version.outputs.new_version }}
+          git push origin ${{ steps.calculate_version.outputs.new_version }}
 
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.calculate_version.outputs.new_version }}
-          name: Release v${{ steps.calculate_version.outputs.new_version }}
+          tag_name: ${{ steps.calculate_version.outputs.new_version }}
+          name: Release ${{ steps.calculate_version.outputs.new_version }}
           draft: true
           prerelease: false
           generate_release_notes: true
@@ -95,6 +95,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ steps.calculate_version.outputs.new_version }}
-          git push origin release/v${{ steps.calculate_version.outputs.new_version }}
+          git checkout -b release/${{ steps.calculate_version.outputs.new_version }}
+          git push origin release/${{ steps.calculate_version.outputs.new_version }}
 
