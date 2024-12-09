@@ -43,57 +43,37 @@ jobs:
 
       - name: Determine version
         id: determine_version
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const core = require('@actions/core');
-            const github = require('@actions/github');
-
-            async function run() {
-              let version;
-              const token = core.getInput('GITHUB_TOKEN');
-              const octokit = github.getOctokit(token);
-
-              if ("${{ github.event.inputs.version }}" !== "none") {
-                version = "${{ github.event.inputs.version }}";
-              } else {
-                const latestRelease = await octokit.rest.repos.getLatestRelease({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo
-                });
-                const tagName = latestRelease.data.tag_name;
-                const versionParts = tagName.replace(/^v/, '').split('.');
-                const minorVersion = parseInt(versionParts[1]) + 1;
-                version = `${versionParts[0]}.${minorVersion}.0`;
-              }
-              console.log(`Determined version: ${version}`);
-              core.setOutput('version', version);
-            }
-
-            run().catch(error => {
-              core.setFailed(error.message);
-            });
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "none" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            latest_release=$(gh release view --json tagName -q .tagName)
+            version_parts=(${latest_release//./ })
+            minor_version=$((version_parts[1] + 1))
+            new_version="${version_parts[0]}.${minor_version}.0"
+            echo "version=${new_version}" >> $GITHUB_ENV
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete existing tag in remote
         run: |
-          git tag -d v${{ steps.determine_version.outputs.version }} || true
-          git push --delete origin v${{ steps.determine_version.outputs.version }} || true
+          git tag -d v${{ env.version }} || true
+          git push --delete origin v${{ env.version }} || true
 
       - name: Create new tag
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag v${{ steps.determine_version.outputs.version }}
-          git push origin v${{ steps.determine_version.outputs.version }}
+          git tag v${{ env.version }}
+          git push origin v${{ env.version }}
 
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.determine_version.outputs.version }}
-          name: Release v${{ steps.determine_version.outputs.version }}
+          tag_name: v${{ env.version }}
+          name: Release v${{ env.version }}
           draft: true
           prerelease: false
           generate_release_notes: true
@@ -105,5 +85,5 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ steps.determine_version.outputs.version }}
-          git push origin release/v${{ steps.determine_version.outputs.version }}
+          git checkout -b release/v${{ env.version }}
+          git push origin release/v${{ env.version }}
