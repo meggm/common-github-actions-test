@@ -45,7 +45,7 @@ jobs:
         id: determine_version
         run: |
           if [ "${{ github.event.inputs.version }}" != "none" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+            VERSION="${{ github.event.inputs.version }}"
           else
             REPO="${{ github.repository }}"
             echo "Fetching latest release for $REPO"
@@ -59,30 +59,31 @@ jobs:
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
             NEXT_MINOR=$((MINOR + 1))
             NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
-            echo "Next version: $NEW_VERSION"
-            echo "version=$NEW_VERSION" >> $GITHUB_ENV
+            VERSION=$NEW_VERSION
           fi
+          echo "Determined version: $VERSION"
+          echo "::set-output name=version::$VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete existing tag in remote
         run: |
-          git tag -d v${{ env.version }} || true
-          git push --delete origin v${{ env.version }} || true
+          git tag -d v${{ steps.determine_version.outputs.version }} || true
+          git push --delete origin v${{ steps.determine_version.outputs.version }} || true
 
       - name: Create new tag
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag v${{ env.version }}
-          git push origin v${{ env.version }}
+          git tag v${{ steps.determine_version.outputs.version }}
+          git push origin v${{ steps.determine_version.outputs.version }}
 
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.version }}
-          name: Release v${{ env.version }}
+          tag_name: v${{ steps.determine_version.outputs.version }}
+          name: Release v${{ steps.determine_version.outputs.version }}
           draft: true
           prerelease: false
           generate_release_notes: true
@@ -94,5 +95,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ env.version }}
-          git push origin release/v${{ env.version }}
+          git checkout -b release/v${{ steps.determine_version.outputs.version }}
+          git push origin release/v${{ steps.determine_version.outputs.version }}
+
