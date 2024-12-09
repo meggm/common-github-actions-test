@@ -119,6 +119,9 @@ jobs:
     needs: push-images
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
       - name: Create new tag
         run: |
           git config --global user.name 'github-actions'
