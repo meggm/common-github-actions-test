@@ -10,11 +10,6 @@ name: Release Go Client Libraries
 on:
   workflow_call:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (major, minor, patch), ex: 1.0.0'
-        required: false
-        default: 'none'
 
 jobs:
   determine-version:
@@ -27,36 +22,27 @@ jobs:
       - name: Get Latest Release Version
         id: get_release
         run: |
-          if [ "${{ github.event.inputs.version }}" != "none" ]; then
-            RELEASE_VERSION="${{ github.event.inputs.version }}"
-          else
             REPO="${{ github.repository }}"
             echo "Fetching latest release for $REPO"
             RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
             if [[ "$RELEASE_VERSION" == "null" ]]; then
               echo "No release found for $REPO"
               RELEASE_VERSION="v0.0.0"
-            fi
-            echo "Latest release version: $RELEASE_VERSION"
-          fi
-          echo "::set-output name=release_version::$RELEASE_VERSION"
+             fi
+             echo "::set-output name=release_version::$RELEASE_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Calculate Next Minor Version
         id: calculate_version
         run: |
-          if [ "${{ github.event.inputs.version }}" != "none" ]; then
-            NEW_VERSION="${{ github.event.inputs.version }}"
-          else
             RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
             VERSION="${RELEASE_VERSION#v}"
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
             NEXT_MINOR=$((MINOR + 1))
             NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
-          fi
-          echo "Next version: $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
+            echo "Next version: $NEW_VERSION"
+            echo "::set-output name=new_version::$NEW_VERSION"
 
       - name: Output Version
         run: echo "Determined version:${{ steps.determine_version.outputs.version }}"
