@@ -8,82 +8,38 @@
 name: Release Go Client Libraries
 
 on:
-  workflow_call:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (major, minor, patch), ex: 1.0.0'
-        required: false
-        default: 'none'
 
 jobs:
-  build-and-scan:
-    name: Build, Scan and Release
+  get-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.23"
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Run malware scan
-        uses: dell/common-github-actions/malware-scanner@main
-        with:
-          directories: .
-          options: -ri
-
-      - name: Determine version
-        id: determine_version
+      - name: Get Latest Release Version
+        id: get_release
         run: |
-          if [ "${{ github.event.inputs.version }}" != "none" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          else
-            latest_release=$(gh release view --json tagName -q .tagName)
-            version_parts=(${latest_release//./ })
-            minor_version=$((version_parts[1] + 1))
-            new_version="${version_parts[0]}.${minor_version}.0"
-            echo "version=${new_version}" >> $GITHUB_ENV
+          REPO="${{ github.repository }}"
+          echo "Fetching latest release for $REPO"
+          RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
+          if [[ "$RELEASE_VERSION" == "null" ]]; then
+            echo "No release found for $REPO"
+            RELEASE_VERSION="v0.0.0"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Latest release version: $RELEASE_VERSION"
+          echo "::set-output name=release_version::$RELEASE_VERSION"
 
-      - name: Delete existing tag in remote
+      - name: Calculate Next Minor Version
+        id: calculate_version
         run: |
-          git tag -d v${{ env.version }} || true
-          git push --delete origin v${{ env.version }} || true
+          RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
+          VERSION="${RELEASE_VERSION#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEXT_MINOR=$((MINOR + 1))
+          NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
+          echo "Next version: $NEW_VERSION"
+          echo "::set-output name=new_version::$NEW_VERSION"
 
-      - name: Create new tag
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git tag v${{ env.version }}
-          git push origin v${{ env.version }}
-
-      - name: Create Release
-        id: release_notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.version }}
-          name: Release v${{ env.version }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release branch
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ env.version }}
-          git push origin release/v${{ env.version }}
+      - name: Output Version
+        run: echo "Determined version:${{ steps.calculate_version.outputs.new_version }}"
