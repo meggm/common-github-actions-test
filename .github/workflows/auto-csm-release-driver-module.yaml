@@ -116,7 +116,9 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: push-images
+    needs: 
+      - build-and-scan
+      - push-images  
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
