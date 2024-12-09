@@ -7,27 +7,25 @@
 #  http://www.apache.org/licenses/LICENSE-2.0
 
 # This workflow is used to release libraries like gobrick, gofsutil etc.
+
 name: Release Go Client Libraries
 
 on:
   workflow_call:
-    inputs:
-      version:
-        description: 'Version to release (major.minor.patch), e.g., 1.0.0'
-        required: false # Optional since we calculate it in the workflow
 
 jobs:
   compute-version:
+    name: Compute Next Version
     runs-on: ubuntu-latest
 
     outputs:
       next_version: ${{ steps.increment_version.outputs.next_version }}
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Get Current Version (Latest Tag)
+      - name: Determine Current Version
         id: determine_version
         run: |
           CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
@@ -51,53 +49,38 @@ jobs:
           PATCH_VERSION=${VERSION_PARTS[2]}
           NEW_MINOR_VERSION=$((MINOR_VERSION + 1))
           NEXT_VERSION="${MAJOR_VERSION}.${NEW_MINOR_VERSION}.0"
-          echo "Next version: $NEXT_VERSION"
           echo "::set-output name=next_version::$NEXT_VERSION"
+          echo "Next version calculated: $NEXT_VERSION"
 
   build-and-release:
+    name: Build, Tag, and Release
     needs: compute-version
     runs-on: ubuntu-latest
 
     steps:
-      - name: Validate Version
+      - name: Validate Computed Version
         run: |
-          echo "Releasing version: ${{ needs.compute-version.outputs.next_version }}"
+          if [[ "${{ needs.compute-version.outputs.next_version }}" == "" ]]; then
+            echo "Error: Next version is empty."
+            exit 1
+          fi
+          echo "Using version: ${{ needs.compute-version.outputs.next_version }}"
 
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Set Up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
 
-      - name: Build Code
+      - name: Build Project
         run: go build -v ./...
 
-      - name: Create New Tag
+      - name: Tag Release
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
           git tag v${{ needs.compute-version.outputs.next_version }}
           git push origin v${{ needs.compute-version.outputs.next_version }}
-
-      - name: Create Release
-        id: release_notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.compute-version.outputs.next_version }}
-          name: Release v${{ needs.compute-version.outputs.next_version }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release Branch
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ needs.compute-version.outputs.next_version }}
-          git push origin release/v${{ needs.compute-version.outputs.next_version }}
 
