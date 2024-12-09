@@ -14,32 +14,14 @@ on:
       version:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: false
-        default: 'none'
 
 jobs:
-  build-and-scan:
-    name: Build, Scan and Release
+  determine-version:
+    name: Determine Version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.23"
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Run malware scan
-        uses: dell/common-github-actions/malware-scanner@main
-        with:
-          directories: .
-          options: -ri
 
       - name: Determine version
         id: determine_version
@@ -66,35 +48,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete existing tag in remote
-        run: |
-          git tag -d v${{ steps.determine_version.outputs.version }} || true
-          git push --delete origin v${{ steps.determine_version.outputs.version }} || true
-
-      - name: Create new tag
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git tag v${{ steps.determine_version.outputs.version }}
-          git push origin v${{ steps.determine_version.outputs.version }}
-
-      - name: Create Release
-        id: release_notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.determine_version.outputs.version }}
-          name: Release v${{ steps.determine_version.outputs.version }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release branch
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ steps.determine_version.outputs.version }}
-          git push origin release/v${{ steps.determine_version.outputs.version }}
+      - name: Output Version
+        run: echo "Determined version:${{ steps.determine_version.outputs.version }}"
 
