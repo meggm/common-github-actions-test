@@ -14,6 +14,7 @@ on:
       version:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: false
+        default: 'none'
 
 jobs:
   determine-version:
@@ -23,11 +24,11 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      - name: Determine version
-        id: determine_version
+      - name: Get Latest Release Version
+        id: get_release
         run: |
           if [ "${{ github.event.inputs.version }}" != "none" ]; then
-            VERSION="${{ github.event.inputs.version }}"
+            RELEASE_VERSION="${{ github.event.inputs.version }}"
           else
             REPO="${{ github.repository }}"
             echo "Fetching latest release for $REPO"
@@ -37,16 +38,25 @@ jobs:
               RELEASE_VERSION="v0.0.0"
             fi
             echo "Latest release version: $RELEASE_VERSION"
+          fi
+          echo "::set-output name=release_version::$RELEASE_VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calculate Next Minor Version
+        id: calculate_version
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "none" ]; then
+            NEW_VERSION="${{ github.event.inputs.version }}"
+          else
+            RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
             VERSION="${RELEASE_VERSION#v}"
             IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
             NEXT_MINOR=$((MINOR + 1))
             NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
-            VERSION=$NEW_VERSION
           fi
-          echo "Determined version: $VERSION"
-          echo "::set-output name=version::$VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Next version: $NEW_VERSION"
+          echo "::set-output name=new_version::$NEW_VERSION"
 
       - name: Output Version
         run: echo "Determined version:${{ steps.determine_version.outputs.version }}"
