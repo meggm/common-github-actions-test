@@ -31,5 +31,5 @@ jobs:
           # For token information, see: https://github.com/peter-evans/repository-dispatch/tree/main?tab=readme-ov-file#token
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
-          event-type: auto-release-workflow
+          event-type: auto-driver-module-release-workflow
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
