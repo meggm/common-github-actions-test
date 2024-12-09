@@ -10,37 +10,89 @@ name: Release Go Client Libraries
 on:
   workflow_call:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        required: false
+        default: 'none'
 
 jobs:
-  get-version:
+  build-and-scan:
+    name: Build, Scan and Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
 
-      - name: Get Latest Release Version
-        id: get_release
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run malware scan
+        uses: dell/common-github-actions/malware-scanner@main
+        with:
+          directories: .
+          options: -ri
+
+      - name: Determine version
+        id: determine_version
         run: |
-          REPO="${{ github.repository }}"
-          echo "Fetching latest release for $REPO"
-          RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
-          if [[ "$RELEASE_VERSION" == "null" ]]; then
-            echo "No release found for $REPO"
-            RELEASE_VERSION="v0.0.0"
+          if [ "${{ github.event.inputs.version }}" != "none" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            REPO="${{ github.repository }}"
+            echo "Fetching latest release for $REPO"
+            RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
+            if [[ "$RELEASE_VERSION" == "null" ]]; then
+              echo "No release found for $REPO"
+              RELEASE_VERSION="v0.0.0"
+            fi
+            echo "Latest release version: $RELEASE_VERSION"
+            VERSION="${RELEASE_VERSION#v}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            NEXT_MINOR=$((MINOR + 1))
+            NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
+            echo "Next version: $NEW_VERSION"
+            echo "version=$NEW_VERSION" >> $GITHUB_ENV
           fi
-          echo "Latest release version: $RELEASE_VERSION"
-          echo "::set-output name=release_version::$RELEASE_VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Calculate Next Minor Version
-        id: calculate_version
+      - name: Delete existing tag in remote
         run: |
-          RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
-          VERSION="${RELEASE_VERSION#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEXT_MINOR=$((MINOR + 1))
-          NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
-          echo "Next version: $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
+          git tag -d v${{ env.version }} || true
+          git push --delete origin v${{ env.version }} || true
 
-      - name: Output Version
-        run: echo "Determined version:${{ steps.calculate_version.outputs.new_version }}"
+      - name: Create new tag
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag v${{ env.version }}
+          git push origin v${{ env.version }}
+
+      - name: Create Release
+        id: release_notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.version }}
+          name: Release v${{ env.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout -b release/v${{ env.version }}
+          git push origin release/v${{ env.version }}
