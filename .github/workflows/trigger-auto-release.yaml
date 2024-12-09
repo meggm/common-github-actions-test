@@ -25,24 +25,6 @@ jobs:
           ]
 
     steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v2
-        with:
-          repository: ${{ matrix.repo }}
-
-      - name: Get the latest release version from the repo
-        id: get_latest_version
-        run: |
-          # Fetch the latest release version from the libs repository
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/${{ matrix.repo }}/releases/latest | jq -r .tag_name)
-          echo "Latest version: $LATEST_VERSION"
-          # Increment the minor version (e.g., v1.2.3 -> v1.3.0)
-          VERSION_PARTS=(${LATEST_VERSION//./ })
-          VERSION_PARTS[1]=$((VERSION_PARTS[1] + 1))  # Increment minor version
-          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.0"  # Set patch version to 0
-          echo "New version to release: $NEW_VERSION"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          
       - name: Trigger Auto Release
         uses: peter-evans/repository-dispatch@v3
         with:
@@ -50,4 +32,4 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: auto-release-workflow
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "version": "${{ env.NEW_VERSION }}"}'
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
