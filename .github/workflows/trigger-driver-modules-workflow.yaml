@@ -7,7 +7,7 @@
 #  http://www.apache.org/licenses/LICENSE-2.0
 
 # Trigger workflow for auto release of CSM projects
-name: Trigger Auto Release Workflow
+name: Trigger Auto Release  Driver Modules Workflow
 
 on:
   workflow_dispatch:
