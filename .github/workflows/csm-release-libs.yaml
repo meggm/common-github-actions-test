@@ -48,4 +48,4 @@ jobs:
           echo "::set-output name=new_version::$NEW_VERSION"
 
       - name: Print Incremented Version
-        run: echo "The new version is: ${{ steps.increment_version.outputs.new_version }}"
+        run: echo "The new version is:${{steps.increment_version.outputs.new_version}}"
