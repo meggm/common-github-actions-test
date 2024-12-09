@@ -17,16 +17,46 @@ on:
         required: true
 
 jobs:
+  compute-version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      next_version: ${{ steps.increment_version.outputs.next_version }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Get Current Version (Latest Tag)
+        id: determine_version
+        run: |
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 || echo "0.0.0")
+          if [[ ! "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: $CURRENT_VERSION"
+            exit 1
+          fi
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+
+      - name: Increment Major Version
+        id: increment_version
+        run: |
+          IFS='.' read -r -a VERSION_PARTS <<< "${{ env.CURRENT_VERSION }}"
+          NEXT_MAJOR_VERSION=$((VERSION_PARTS[0] + 1))
+          NEXT_VERSION="${NEXT_MAJOR_VERSION}.0.0"
+          echo "::set-output name=next_version::$NEXT_VERSION"
+
   build-and-scan:
     name: Build, Scan, and Release
     runs-on: ubuntu-latest
     steps:
       - name: Validate version input
         run: |
-          if [[ "${{ inputs.version }}" == "" ]]; then
-            echo "Version is required but was not provided."
+          VERSION=${{ needs.compute-version.outputs.next_version }}
+          if [[ -z "$VERSION" ]]; then
+            echo "Error: Version input is required but not provided."
             exit 1
           fi
+          echo "Releasing version: $VERSION"
 
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -52,15 +82,15 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag v${{ inputs.version }}
-          git push origin v${{ inputs.version }}
+          git tag v${{ needs.compute-version.outputs.next_version }}
+          git push origin v${{ needs.compute-version.outputs.next_version }}
 
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ inputs.version }}
-          name: Release v${{ inputs.version }}
+          tag_name: v${{ needs.compute-version.outputs.next_version }}
+          name: Release v${{ needs.compute-version.outputs.next_version }}
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -72,6 +102,6 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ inputs.version }}
-          git push origin release/v${{ inputs.version }}
+          git checkout -b release/v${{ needs.compute-version.outputs.next_version }}
+          git push origin release/v${{ needs.compute-version.outputs.next_version }}
 
