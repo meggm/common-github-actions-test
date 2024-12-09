@@ -28,8 +28,8 @@ jobs:
             if [[ "$RELEASE_VERSION" == "null" ]]; then
               echo "No release found for $REPO"
               RELEASE_VERSION="v0.0.0"
-             fi
-             echo "::set-output name=release_version::$RELEASE_VERSION"
+            fi
+            echo "::set-output name=release_version::$RELEASE_VERSION"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -45,5 +45,4 @@ jobs:
             echo "::set-output name=new_version::$NEW_VERSION"
 
       - name: Output Version
-        run: echo "Determined version:${{ steps.determine_version.outputs.version }}"
-
+        run: echo "Determined version:${{ steps.calculate_version.outputs.new_version }}"
