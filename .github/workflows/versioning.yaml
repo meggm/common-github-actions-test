@@ -68,6 +68,7 @@ jobs:
   trigger-secondary-workflow:
     needs: extract-image-name
     uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
+    name: Release CSM Drivers and Modules
     with:
       version: ${{ needs.calculate-next-version.outputs.new_version }}
       image: ${{ needs.extract-image-name.outputs.image_name }}
