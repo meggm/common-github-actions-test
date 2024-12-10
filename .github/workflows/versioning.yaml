@@ -72,12 +72,14 @@ jobs:
       - name: Trigger Secondary Workflow
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
+          workflow: .github/workflows/csm-release-driver-module.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
+          repository: meggm/common-github-actions-test
+          ref: main
           inputs: |
             {
               "version": "${{ needs.calculate-next-version.outputs.new_version }}",
-              "image": "${{ needs.extract-image-name.outputs.image_name }}"
+              "image_name": "${{ needs.extract-image-name.outputs.image_name }}"
             }
   #trigger-secondary-workflow:
   #  needs: extract-image-name
