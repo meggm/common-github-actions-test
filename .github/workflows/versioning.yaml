@@ -64,23 +64,29 @@ jobs:
           IMAGE_NAME=$(echo "$REPO" | awk -F'/' '{print $2}')
           echo "Image name: $IMAGE_NAME"
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
-
+          
   trigger-secondary-workflow:
     needs: extract-image-name
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Secondary Workflow
-        uses: benc-uk/workflow-dispatch@v1
+        uses: actions/github-script@v6
         with:
-          workflow: .github/workflows/csm-release-driver-module.yaml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: meggm/common-github-actions-test
-          ref: main
-          inputs: |
-            {
-              "version": "${{ needs.calculate-next-version.outputs.new_version }}",
-              "image_name": "${{ needs.extract-image-name.outputs.image_name }}"
-            }
+          script: |
+            const { Octokit } = require("@octokit/rest");
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+            await octokit.repos.createDispatchEvent({
+              owner: 'meggm',
+              repo: 'common-github-actions-test',
+              event_type: 'trigger-secondary-workflow',
+              client_payload: {
+                version: '${{ needs.calculate-next-version.outputs.new_version }}',
+                image_name: '${{ needs.extract-image-name.outputs.image_name }}'
+              }
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #trigger-secondary-workflow:
   #  needs: extract-image-name
   #  uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
