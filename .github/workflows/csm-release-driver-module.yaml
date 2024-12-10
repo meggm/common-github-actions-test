@@ -20,6 +20,8 @@ on:
       image:
         description: 'Image name, ex: csm-powerstore'
         required: true
+  repository_dispatch:
+    types: [trigger-secondary-workflow]
 
 jobs:
   build-and-scan:
