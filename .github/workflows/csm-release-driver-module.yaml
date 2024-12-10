@@ -66,13 +66,15 @@ jobs:
       - name: Pull nightly image from Quay.io
         run: docker pull quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly
       - name: Retag image for Quay.io
-        run: |
-          docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:v${{ github.event.inputs.version }}
-          docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:latest
+        run: echo "Dummy retag image for Quay"
+       # run: |
+       #   docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:v${{ github.event.inputs.version }}
+       #   docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:latest
       - name: Retag image for Docker Hub
-        run: |
-          docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly dellemc/${{ github.event.inputs.image }}:v${{ github.event.inputs.version }}
-          docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly dellemc/${{ github.event.inputs.image }}:latest
+        run: echo "Dummy retag for Docker"
+        #run: |
+        #  docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly dellemc/${{ github.event.inputs.image }}:v${{ github.event.inputs.version }}
+        #  docker tag quay.io/dell/container-storage-modules/${{ github.event.inputs.image }}:nightly dellemc/${{ github.event.inputs.image }}:latest
       - name: Push ${{ github.event.inputs.version }} and latest tag to Quay.io
         run: echo "Dummy push"
       - name: Push ${{ github.event.inputs.version }} and latest tag to Docker Hub
