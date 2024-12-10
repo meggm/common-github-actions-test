@@ -67,8 +67,21 @@ jobs:
 
   trigger-secondary-workflow:
     needs: extract-image-name
-    uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
-    name: Release CSM Drivers and Modules
-    with:
-      version: ${{ needs.calculate-next-version.outputs.new_version }}
-      image: ${{ needs.extract-image-name.outputs.image_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Secondary Workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          inputs: |
+            version: ${{ needs.calculate-next-version.outputs.new_version }}
+            image: ${{ needs.extract-image-name.outputs.image_name }}          
+
+  #trigger-secondary-workflow:
+  #  needs: extract-image-name
+  #  uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
+  #  name: Release CSM Drivers and Modules
+  #  with:
+  #    version: ${{ needs.calculate-next-version.outputs.new_version }}
+  #    image: ${{ needs.extract-image-name.outputs.image_name }}
