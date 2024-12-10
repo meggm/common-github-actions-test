@@ -3,6 +3,8 @@ name: Versioning Workflow
 on:
   workflow_call:
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-versioning]  
 
 jobs:
   get-latest-release:
@@ -65,28 +67,18 @@ jobs:
           echo "Image name: $IMAGE_NAME"
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
           
-  trigger-secondary-workflow:
-    needs: extract-image-name
+  trigger-releaselibs:
+    name: Trigger Releaselibs Workflow in Libs Repo
     runs-on: ubuntu-latest
+    needs: extract-image-name
     steps:
-      - name: Trigger Secondary Workflow
-        uses: actions/github-script@v6
+      - name: Dispatch Event to Releaselibs Workflow
+        uses: peter-evans/repository-dispatch@v3
         with:
-          script: |
-            const { Octokit } = require("@octokit/rest");
-            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-            await octokit.repos.createDispatchEvent({
-              owner: 'meggm',
-              repo: 'common-github-actions-test',
-              event_type: 'trigger-secondary-workflow',
-              client_payload: {
-                version: '${{ needs.calculate-next-version.outputs.new_version }}',
-                image_name: '${{ needs.extract-image-name.outputs.image_name }}'
-              }
-            });
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          repository: ${{ github.event.client_payload.target_repo }}
+          event-type: trigger-releaselibs
+          client-payload: '{"version": "${{ needs.calculate-version.outputs.new_version }}", "image_name": "${{ needs.calculate-version.outputs.image_name }}"}'
   #trigger-secondary-workflow:
   #  needs: extract-image-name
   #  uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
