@@ -52,11 +52,11 @@ jobs:
     needs: build-and-scan
     runs-on: ubuntu-latest
     steps:
-      - name: Log in to Quay.io
-        run: echo "${{ secrets.QUAY_PASSWORD }}" | docker login quay.io -u "${{ secrets.QUAY_USERNAME }}" --password-stdin
+    #  - name: Log in to Quay.io
+    #    run: echo "${{ secrets.QUAY_PASSWORD }}" | docker login quay.io -u "${{ secrets.QUAY_USERNAME }}" --password-stdin
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+    # - name: Log in to Docker Hub
+    #    run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Image name
         run: echo "Image name:" "${{ inputs.image }}"
