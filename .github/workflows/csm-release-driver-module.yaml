@@ -4,14 +4,15 @@ name: Release CSM Drivers and Modules
 # Invocable as a reusable workflow
 on:
   workflow_call:
-  workflow_dispatch:
     inputs:
       version:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: true
+        type: string
       image:
         description: 'Image name, ex: csm-powerstore'
         required: true
+        type: string
 
 jobs:
   build-and-scan:
@@ -57,6 +58,9 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      - name: Image name
+        run: echo "Image name:" "${{ inputs.image }}"
+
   create-release:
     name: Create Release
     needs: push-images
@@ -66,16 +70,16 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git tag v${{ github.event.inputs.version }}
-          git push origin v${{ github.event.inputs.version }}
+          git tag v${{ inputs.version }}
+          git push origin v${{ inputs.version }}
 
       # TODO: attach built binaries to the release
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Release v${{ github.event.inputs.version }}
+          tag_name: v${{ inputs.version }}
+          name: Release v${{ inputs.version }}
           draft: true
           prerelease: false
           generate_release_notes: true
@@ -93,5 +97,5 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git checkout -b release/v${{ github.event.inputs.version }}
-          git push origin release/v${{ github.event.inputs.version }}
+          git checkout -b release/v${{ inputs.version }}
+          git push origin release/v${{ inputs.version }}
