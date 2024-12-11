@@ -1,5 +1,8 @@
 name: Release CSM Drivers and Modules
 
+# This workflow is used to release CSI Drivers and modules.
+name: Release CSM Drivers and Modules
+
 # Invocable as a reusable workflow
 on:
   workflow_call:
@@ -11,9 +14,6 @@ on:
       image:
         description: 'Image name, ex: csm-powerstore'
         required: true
-  repository_dispatch:
-    types: [trigger-releaselibs]
-
 jobs:
   build-and-scan:
     name: Build, Scan and Release
