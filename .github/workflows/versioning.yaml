@@ -1,31 +1,20 @@
 name: Versioning Workflow
+
 on:
   workflow_call:
-  workflow_dispatch:
     inputs:
       version:
         required: true
         type: string
-        description: "The version passed from the calling workflow."
       image:
         required: true
         type: string
-        description: "The image name passed from the calling workflow."
 
 jobs:
-  process-version:
+  versioning:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Log the received parameters
-      - name: Log received inputs
+      - name: Show version and image
         run: |
-          echo "Received version: ${{ inputs.version }}"
-          echo "Received image: ${{ inputs.image }}"
-
-      # Step 2: Use the parameters (example: save to a file or execute a script)
-      - name: Use version and image
-        run: |
-          echo "Processing version ${{ inputs.version }} for image ${{ inputs.image }}"
-          # Example of using these values in a script or command
-          echo "version=${{ inputs.version }}" > version-info.txt
-          echo "image=${{ inputs.image }}" >> version-info.txt
+          echo "Version: ${{ inputs.version }}"
+          echo "Image: ${{ inputs.image }}"
