@@ -1,88 +1,30 @@
 name: Versioning Workflow
-
 on:
   workflow_call:
-  workflow_dispatch:
-  repository_dispatch:
-    types: [trigger-versioning]  
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "The version passed from the calling workflow."
+      image:
+        required: true
+        type: string
+        description: "The image name passed from the calling workflow."
 
 jobs:
-  get-latest-release:
+  process-version:
     runs-on: ubuntu-latest
-    outputs:
-      release_version: ${{ steps.get_release.outputs.release_version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Get Latest Release Version
-        id: get_release
+      # Step 1: Log the received parameters
+      - name: Log received inputs
         run: |
-          REPO="${{ github.repository }}"
-          echo "Fetching latest release for $REPO"
-          RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name' | sed 's/^v//')
-          if [[ "$RELEASE_VERSION" == "null" ]]; then
-            echo "No release found for $REPO"
-            RELEASE_VERSION="0.0.0"
-          fi
-          echo "Latest release version: $RELEASE_VERSION"
-          echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Received version: ${{ inputs.version }}"
+          echo "Received image: ${{ inputs.image }}"
 
-  calculate-next-version:
-    needs: get-latest-release
-    runs-on: ubuntu-latest
-    outputs:
-      new_version: ${{ steps.calculate_version.outputs.new_version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Calculate Next Minor Version
-        id: calculate_version
+      # Step 2: Use the parameters (example: save to a file or execute a script)
+      - name: Use version and image
         run: |
-          RELEASE_VERSION="${{ needs.get-latest-release.outputs.release_version }}"
-          VERSION="$RELEASE_VERSION"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEXT_MINOR=$((MINOR + 1))
-          NEW_VERSION="$MAJOR.$NEXT_MINOR.0"
-          echo "Next version: $NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-  extract-image-name:
-    needs: calculate-next-version
-    runs-on: ubuntu-latest
-    outputs:
-      image_name: ${{ steps.extract_image.outputs.image_name }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Extract Image Name
-        id: extract_image
-        run: |
-          REPO="${{ github.repository }}"
-          IMAGE_NAME=$(echo "$REPO" | awk -F'/' '{print $2}')
-          echo "Image name: $IMAGE_NAME"
-          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
-          
-  trigger-releaselibs:
-    name: Trigger Releaselibs Workflow in Libs Repo
-    runs-on: ubuntu-latest
-    needs: extract-image-name
-    steps:
-      - name: Dispatch Event to Releaselibs Workflow
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository: ${{ github.event.client_payload.target_repo }}
-          event-type: trigger-releaselibs
-          client-payload: '{"version": "${{ needs.calculate-version.outputs.new_version }}", "image_name": "${{ needs.calculate-version.outputs.image_name }}"}'
-  #trigger-secondary-workflow:
-  #  needs: extract-image-name
-  #  uses: meggm/common-github-actions-test/.github/workflows/csm-release-driver-module.yaml@main
-  #  name: Release CSM Drivers and Modules
-  #  with:
-  #    version: ${{ needs.calculate-next-version.outputs.new_version }}
-  #    image: ${{ needs.extract-image-name.outputs.image_name }}
+          echo "Processing version ${{ inputs.version }} for image ${{ inputs.image }}"
+          # Example of using these values in a script or command
+          echo "version=${{ inputs.version }}" > version-info.txt
+          echo "image=${{ inputs.image }}" >> version-info.txt
