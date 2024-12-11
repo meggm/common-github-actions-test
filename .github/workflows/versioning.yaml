@@ -1,6 +1,7 @@
 name: Versioning Workflow
 on:
   workflow_call:
+  workflow_dispatch:
     inputs:
       version:
         required: true
