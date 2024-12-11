@@ -2,6 +2,7 @@ name: Versioning Workflow
 
 on:
   workflow_call:
+  workflow_dispatch:
     inputs:
       version:
         required: true
@@ -16,5 +17,5 @@ jobs:
     steps:
       - name: Show version and image
         run: |
-          echo "Version: ${{ inputs.version }}"
+          echo "Version: ${{ github.event.inputs.version }}"
           echo "Image: ${{ inputs.image }}"
