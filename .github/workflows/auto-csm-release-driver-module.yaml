@@ -87,10 +87,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Log in to Quay.io
-        run: echo "${{ secrets.QUAY_PASSWORD }}" | docker login quay.io -u "${{ secrets.QUAY_USERNAME }}" --password-stdin
+        run: echo "Log in to Quay"
 
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        run: echo "Log into Docker"
 
       - name: Pull nightly image from Quay.io
         #run: docker pull quay.io/dell/container-storage-modules/${{ steps.extract_image.outputs.image_name }}:nightly
