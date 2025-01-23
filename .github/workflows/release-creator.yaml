@@ -1,0 +1,84 @@
+# Copyright (c) 2024 Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+
+# This workflow is a reusable one for creating tag and release.
+name: Tag and Release Creator
+
+# Invocable as a reusable workflow
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        required: true
+        type: string
+jobs:
+  tag-and-release:
+    name: Create tag and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest release version
+        id: get-latest-version
+        run: |
+          latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "latest_version=${latest_version}" >> $GITHUB_ENV
+
+      - name: Increment minor version and remove 'v' prefix
+        id: set-version
+        run: |
+          version=${{ github.env.get-latest-version.latest_version }}
+          clean_version=${version#v}
+
+            IFS='.' read -r -a version_parts <<< "$latest_version"
+            
+            if "${{ inputs.version == 'major' }}"; then
+              # major version bump up
+              ((version_parts[0]++))
+            fi
+            if "${{ inputs.version == 'minor' }}"; then
+              # minor version bump up
+              ((version_parts[1]++))
+            fi
+            if "${{ inputs.version == 'patch' }}"; then
+              # patch version bump up
+              ((version_parts[2]++))
+            fi
+            
+            new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+
+          echo "New version: $new_version"
+          echo "::set-output name=version::$new_version"
+
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Create new tag
+        run: |
+          git tag -s -a v${{ github.event.actions.set-version.outputs.version }} -m "Release v${{ github.event.inputs.version }}"
+          git push origin v${{ github.event.inputs.version }}
+
+      - name: Create Release
+        id: release_notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
+          body: |
+            ## Documentation
+            [General Documentation](https://dell.github.io/csm-docs/docs/)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch
+        run: |
+          git checkout -b release/v${{ github.event.inputs.version }}
+          git push origin release/v${{ github.event.inputs.version }}
