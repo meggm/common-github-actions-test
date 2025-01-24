@@ -38,6 +38,6 @@ jobs:
             {
               "ref": "${{ github.ref }}",
               "sha": "${{ github.sha }}",
-              "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY }}"
+              "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY | toJSON }}"
             }
 
