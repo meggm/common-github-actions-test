@@ -34,4 +34,4 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: auto-driver-module-release-workflow
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY }}"}'
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "gpg_key": "${{ secrets.GPG_KEY }}"}'
