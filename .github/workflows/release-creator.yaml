@@ -59,8 +59,10 @@ jobs:
 
       - name: Create new tag
         run: |
-          git tag -s -a v${{ github.event.actions.set-version.outputs.version }} -m "Release v${{ github.event.inputs.version }}"
-          git push origin v${{ github.event.inputs.version }}
+          VERSION=${{ github.event.actions.set-version.outputs.version }}
+          INPUT_VERSION=${{ github.event.inputs.version }}
+          git tag -s -a v$VERSION -m "Release v$INPUT_VERSION"
+          git push origin v$INPUT_VERSION
 
       - name: Create Release
         id: release_notes
