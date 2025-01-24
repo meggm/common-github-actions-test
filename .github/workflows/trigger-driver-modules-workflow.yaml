@@ -7,7 +7,7 @@
 #  http://www.apache.org/licenses/LICENSE-2.0
 
 # Trigger workflow for auto release of CSM projects
-name: Trigger Auto Release  Driver Modules Workflow
+name: Trigger Auto Release Driver Modules Workflow
 
 on:
   workflow_dispatch:
@@ -30,8 +30,14 @@ jobs:
       - name: Trigger Auto Release
         uses: peter-evans/repository-dispatch@v3
         with:
-          # For token information, see: https://github.com/peter-evans/repository-dispatch/tree/main?tab=readme-ov-file#token
+          # Use a Personal Access Token with appropriate permissions
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: auto-driver-module-release-workflow
-          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}", "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY }}"}'
+          client-payload: >
+            {
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}",
+              "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY }}"
+            }
+
