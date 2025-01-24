@@ -27,10 +27,18 @@ jobs:
           ]
 
     steps:
+      # Sanitize the GPG key to escape any line breaks
+      - name: Sanitize GPG Key
+        id: sanitize_key
+        run: |
+          echo "${{ secrets.CSM_GPG_PRIVATE_KEY }}" | awk '{printf "%s\\n", $0}' > sanitized_gpg_key.txt
+          SANITIZED_KEY=$(cat sanitized_gpg_key.txt)
+          echo "sanitized_key=$SANITIZED_KEY" >> $GITHUB_ENV
+
+      # Trigger the repository dispatch event
       - name: Trigger Auto Release
         uses: peter-evans/repository-dispatch@v3
         with:
-          # Use a Personal Access Token with appropriate permissions
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: auto-driver-module-release-workflow
@@ -38,6 +46,7 @@ jobs:
             {
               "ref": "${{ github.ref }}",
               "sha": "${{ github.sha }}",
-              "gpg_key": "${{ secrets.CSM_GPG_PRIVATE_KEY | toJSON }}"
+              "gpg_key": "${{ env.sanitized_key }}"
             }
+
 
