@@ -48,6 +48,8 @@ jobs:
       - name: Set up GPG key
         run: |
           echo "GPG key is: $GPG_KEY"
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}  
 
 
   release-and-tag:
