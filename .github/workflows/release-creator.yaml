@@ -32,16 +32,6 @@ jobs:
         with:
           fetch-depth: 0 # Fetch the full history including tags
 
-jobs:
-  tag-and-release:
-    name: Create tag and release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch the full history including tags
-
       - name: Get latest release
         run: |
           latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
