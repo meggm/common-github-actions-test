@@ -18,4 +18,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Debug GPG Key
-        run: echo "Using GPG_KEY of length: ${#${{ secrets.GPG_KEY }}}"
+        run: | 
+            echo "Using GPG_KEY of length: ${#${{ secrets.GPG_KEY }}}"
