@@ -54,12 +54,10 @@ jobs:
           if [ "${{ inputs.version }}" == "major" ]; then
             # Major version bump
             ((version_parts[0]++))
-          fi
-          if [ "${{ inputs.version }}" == "minor" ]; then
+          elif [ "${{ inputs.version }}" == "minor" ]; then
             # Minor version bump
             ((version_parts[1]++))
-          fi
-          if [ "${{ inputs.version }}" == "patch" ]; then
+          elif [ "${{ inputs.version }}" == "patch" ]; then
             # Patch version bump
             ((version_parts[2]++))
           fi
