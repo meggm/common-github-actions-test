@@ -17,6 +17,7 @@ jobs:
 
       - name: Use GPG Key
         run: |
-          echo "GPG Key: ${{ inputs.gpg_key }}"
+          echo "GPG Key: ${{ env.GPG_KEY }}"
           # Add your steps that use the GPG key here
+
 
