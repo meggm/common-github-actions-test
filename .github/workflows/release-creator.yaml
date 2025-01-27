@@ -67,8 +67,6 @@ jobs:
           echo "New version to be released:v$new_version"
           echo "REL_VERSION=v${new_version}" >> $GITHUB_ENV
 
-      - name: Checkout the code
-        uses: actions/checkout@v4
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
@@ -77,7 +75,7 @@ jobs:
           git_commit_gpgsign: true
           git_tag_gpgsign: true
           git_config_global: true
-
+          
       - name: Create new tag
         run: |
           git tag -s -a v${{ github.event.actions.set-version.outputs.version }} -m "Release v${{ github.event.inputs.version }}"
