@@ -21,9 +21,9 @@ jobs:
       matrix:
         repo:
           [
-            "meggm/test-release-csi-powerscale",
+            #"meggm/test-release-csi-powerscale",
             "meggm/test-csi-powerflex",
-            "meggm/test-csi-powerstore",
+            #"meggm/test-csi-powerstore",
           ]
 
     steps:
