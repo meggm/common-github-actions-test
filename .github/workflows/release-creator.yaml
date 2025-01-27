@@ -44,6 +44,8 @@ jobs:
         run: |
           version=${{ github.env.get-latest-version.latest_version }}
           clean_version=${version#v}
+          echo "clean_version: $clean_version"
+          echo "latest version: $latest_version"
 
             IFS='.' read -r -a version_parts <<< "$latest_version"
             
