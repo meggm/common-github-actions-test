@@ -1,0 +1,21 @@
+name: Dummy test
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      images:
+        required: true
+        type: string
+    secrets:
+      GPG_KEY:
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug GPG Key
+        run: echo "Using GPG_KEY of length: ${#${{ secrets.GPG_KEY }}}"
