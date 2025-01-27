@@ -53,7 +53,7 @@ jobs:
     uses: meggm/common-github-actions-test/.github/workflows/release-creator.yaml@main
     with:
       version: ${{ inputs.version }}
-      gpg_key: ${{ inputs.gpg_key }}
+      gpg_key: ${{ env.GPG_PRIVATE_KEY }}
     secrets: inherit
 
   push-images:
