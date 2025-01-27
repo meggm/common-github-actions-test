@@ -1,23 +1,19 @@
-name: Dummy Test Workflow
+name: Reusable Workflow
 
 on:
   workflow_call:
     inputs:
-      gpg_key:
-        description: 'GPG Key'
+      secret_value:
         required: true
         type: string
 
 jobs:
-  test-job:
+  process-secret:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Use GPG Key
+      - name: Process the received secret
         run: |
-          echo "GPG Key: ${{ env.GPG_KEY }}"
-          # Add your steps that use the GPG key here
+          echo "Received secret: ${{ inputs.secret_value }}"
+
 
 
