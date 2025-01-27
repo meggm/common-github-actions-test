@@ -1,22 +1,22 @@
-name: Dummy test
+name: Dummy Test Workflow
 
 on:
   workflow_call:
     inputs:
-      version:
+      gpg_key:
+        description: 'GPG Key'
         required: true
         type: string
-      images:
-        required: true
-        type: string
-    secrets:
-      GPG_KEY:
-        required: true
 
 jobs:
-  release:
+  test-job:
     runs-on: ubuntu-latest
     steps:
-      - name: Debug GPG Key
-        run: | 
-            echo "Using GPG_KEY of length: ${#${{ secrets.GPG_KEY }}}"
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use GPG Key
+        run: |
+          echo "GPG Key: ${{ inputs.gpg_key }}"
+          # Add your steps that use the GPG key here
+
