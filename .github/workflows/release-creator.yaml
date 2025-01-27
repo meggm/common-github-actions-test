@@ -39,30 +39,32 @@ jobs:
           echo "latest_version=${latest_version}" >> $GITHUB_ENV
           echo "$latest_version"
 
-      - name: Increment minor version and remove 'v' prefix
+      - name: Increment version and set new version
         id: set-version
         run: |
-          version=${{ github.env.get-latest-version.latest_version }}
+          version=${{ env.latest_version }}
           clean_version=${version#v}
-          echo "clean_version: $clean_version"
-          echo "latest version: $latest_version"
+          echo "Clean version: $clean_version"
+          echo "Latest version: $latest_version"
 
-            IFS='.' read -r -a version_parts <<< "$latest_version"
-            
-            if "${{ inputs.version == 'major' }}"; then
-              # major version bump up
-              ((version_parts[0]++))
-            fi
-            if "${{ inputs.version == 'minor' }}"; then
-              # minor version bump up
-              ((version_parts[1]++))
-            fi
-            if "${{ inputs.version == 'patch' }}"; then
-              # patch version bump up
-              ((version_parts[2]++))
-            fi
-            
-            new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+          # Split the version into major, minor, patch
+          IFS='.' read -r -a version_parts <<< "$clean_version"
+          
+          # Handle version increment based on the input type (major, minor, patch)
+          if [ "${{ inputs.version }}" == "major" ]; then
+            # Major version bump
+            ((version_parts[0]++))
+          fi
+          if [ "${{ inputs.version }}" == "minor" ]; then
+            # Minor version bump
+            ((version_parts[1]++))
+          fi
+          if [ "${{ inputs.version }}" == "patch" ]; then
+            # Patch version bump
+            ((version_parts[2]++))
+          fi
+
+          new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
 
           echo "New version: $new_version"
           echo "::set-output name=version::$new_version"
