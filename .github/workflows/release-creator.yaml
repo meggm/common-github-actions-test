@@ -37,6 +37,7 @@ jobs:
         run: |
           latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "latest_version=${latest_version}" >> $GITHUB_ENV
+          echo "$latest_version"
 
       - name: Increment minor version and remove 'v' prefix
         id: set-version
