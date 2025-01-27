@@ -21,9 +21,9 @@ on:
         description: "List of image names. Example: csi-powerstore,csi-isilon"
         type: string
         required: true
+    secrets:
       GPG_KEY:
         required: true
-        type: string   
         
 jobs:
   build-and-scan:
@@ -47,9 +47,8 @@ jobs:
           make build
       - name: Set up GPG key
         run: |
-          echo "${{ inputs.GPG_KEY }}" | gpg --batch --import
-        env:
-          GPG_KEY: ${{ inputs.GPG_KEY }}
+          echo "GPG key is: $GPG_KEY"
+
 
   release-and-tag:
     name: Tag and Release
