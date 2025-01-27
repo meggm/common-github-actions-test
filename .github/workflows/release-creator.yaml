@@ -70,6 +70,7 @@ jobs:
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
+          echo "gpg key: ${{ inputs.gpg_key }}"
           gpg_private_key: ${{ inputs.gpg_key }}
           git_user_signingkey: true
           git_commit_gpgsign: true
