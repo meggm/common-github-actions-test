@@ -17,6 +17,10 @@ on:
         description: 'Version to release (major, minor, patch), ex: 1.0.0'
         required: true
         type: string
+      gpg_key:
+        description: "GPG Private Key for signing releases"
+        type: string
+        required: true
         
 jobs:
   tag-and-release:
@@ -60,7 +64,7 @@ jobs:
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
-          gpg_private_key: ${{ env.GPG_PRIVATE_KEY }}
+          gpg_private_key: ${{ inputs.gpg_key }}
           git_user_signingkey: true
           git_commit_gpgsign: true
           git_tag_gpgsign: true
