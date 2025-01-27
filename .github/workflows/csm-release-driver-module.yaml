@@ -21,10 +21,6 @@ on:
         description: "List of image names. Example: csi-powerstore,csi-isilon"
         type: string
         required: true
-      gpg_key:
-        description: "GPG Private Key for signing releases"
-        type: string
-        required: true      
 
 jobs:
   build-and-scan:
