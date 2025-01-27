@@ -43,7 +43,7 @@ jobs:
         id: set-version
         run: |
           version=${{ env.latest_version }}
-          clean_version=${version#v}
+          clean_version=${version#v}  # Remove the 'v' prefix
           echo "Clean version: $clean_version"
           echo "Latest version: $latest_version"
 
@@ -62,10 +62,11 @@ jobs:
             ((version_parts[2]++))
           fi
 
+          # Construct the new version
           new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
 
           echo "New version: $new_version"
-          echo "::set-output name=version::$new_version"
+          echo "new_version=$new_version" >> $GITHUB_ENV
 
       - name: Checkout the code
         uses: actions/checkout@v4
