@@ -46,6 +46,9 @@ jobs:
         run: |
           echo "Building cert-csi binary..."
           make build
+      - name: Debug gpg_key
+        run: |
+          echo "gpg_key=${{ inputs.gpg_key }}"    
 
   release-and-tag:
     name: Tag and Release
