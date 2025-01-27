@@ -32,41 +32,50 @@ jobs:
         with:
           fetch-depth: 0 # Fetch the full history including tags
 
-      - name: Get latest release version
-        id: get-latest-version
+jobs:
+  tag-and-release:
+    name: Create tag and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch the full history including tags
+
+      - name: Get latest release
         run: |
           latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo "latest_version=${latest_version}" >> $GITHUB_ENV
-          echo "$latest_version"
+          echo "MY_VAR=${latest_version}" >> $GITHUB_ENV            
+          echo "latest_version=${latest_version}"
 
-      - name: Increment version and set new version
-        id: set-version
+      - name: Increment version
+        env:
+          MY_VAR: ${{ env.MY_VAR }}
         run: |
-          version=${{ env.latest_version }}
-          clean_version=${version#v}  # Remove the 'v' prefix
-          echo "Clean version: $clean_version"
-          echo "Latest version: $latest_version"
-
-          # Split the version into major, minor, patch
-          IFS='.' read -r -a version_parts <<< "$clean_version"
+          current_version=$MY_VAR
+          current_version=(${current_version#v}) # remove 'v' prefix from $current_version"
           
-          # Handle version increment based on the input type (major, minor, patch)
-          if [ "${{ inputs.version }}" == "major" ]; then
-            # Major version bump
-            ((version_parts[0]++))
-          elif [ "${{ inputs.version }}" == "minor" ]; then
-            # Minor version bump
-            ((version_parts[1]++))
-          elif [ "${{ inputs.version }}" == "patch" ]; then
-            # Patch version bump
-            ((version_parts[2]++))
+          IFS='.' read -r -a version_parts <<< "$current_version"              
+          
+          if "${{ inputs.version == 'major' }}"; then
+              # major version bump up
+              version_parts[0]=$(expr ${version_parts[0]} + 1)
+              new_version="${version_parts[0]}.0.0"
           fi
-
-          # Construct the new version
-          new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
-
-          echo "New version: $new_version"
-          echo "new_version=$new_version" >> $GITHUB_ENV
+          
+          if "${{ inputs.version == 'minor' }}"; then
+              # minor version bump up
+              version_parts[1]=$(expr ${version_parts[1]} + 1)
+              new_version="${version_parts[0]}.${version_parts[1]}.0"
+          fi
+          
+          if "${{ inputs.version == 'patch' }}"; then
+              # patch version bump up
+              version_parts[2]=$(expr ${version_parts[2]} + 1)
+              new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+          fi
+          echo "New version to be released:v$new_version"
+          echo "REL_VERSION=v${new_version}" >> $GITHUB_ENV
 
       - name: Checkout the code
         uses: actions/checkout@v4
