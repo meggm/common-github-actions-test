@@ -69,19 +69,28 @@ jobs:
           echo "New version to be released:v$new_version"
           echo "REL_VERSION=v${new_version}" >> $GITHUB_ENV
           
-      - name: Mask GPG key
+      - name: Decode and sanitize GPG private key
+        id: sanitize-gpg-key
         run: |
-          echo "${{ inputs.gpg_private_key }}" | while IFS= read -r line; do
-            echo "::add-mask::$line"
-          done
-          echo "${{ inputs.gpg_passphrase }}" | while IFS= read -r line; do
-            echo "::add-mask::$line"
-          done
-          
+          # Decode the base64-encoded GPG private key stored in GitHub Secrets
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | tee gpg_private_key.asc
+
+          # Remove any extra spaces or line breaks (optional)
+          sed -i 's/\r//g' gpg_private_key.asc  # Remove carriage return (if any)
+
+          # The sanitized key is saved as an output so it can be used in the next step
+          sanitized_key=$(cat gpg_private_key.asc)
+
+          # Clean up by removing the file (optional)
+          rm -f gpg_private_key.asc
+
+          # Set the sanitized key as an output variable
+          echo "::set-output name=gpg_private_key::$sanitized_key"
+
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg_private_key: ${{ steps.sanitize-gpg-key.outputs.gpg_private_key }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
