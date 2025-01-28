@@ -14,16 +14,9 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Version to release (major, minor, patch), ex: 1.0.0'
+        description: 'Version to release (major, minor, patch)'
         required: true
         type: string
-#      gpg_private_key:
-#        required: true
-#        type: string
-#      gpg_passphrase:
-#        required: false
-#        type: string        
-
 jobs:
   tag-and-release:
     name: Create tag and release
@@ -39,7 +32,6 @@ jobs:
           latest_version=$(git describe --tags $(git rev-list --tags --max-count=1))
           echo "MY_VAR=${latest_version}" >> $GITHUB_ENV            
           echo "latest_version=${latest_version}"
-
       - name: Increment version
         env:
           MY_VAR: ${{ env.MY_VAR }}
