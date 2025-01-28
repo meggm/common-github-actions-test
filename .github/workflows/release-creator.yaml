@@ -69,12 +69,15 @@ jobs:
           echo "New version to be released:v$new_version"
           echo "REL_VERSION=v${new_version}" >> $GITHUB_ENV
           
-      - name: Decode GPG key
-        run: echo "${{ secrets.GPG_PRIVATE_KEY_BASE64 }}" | base64 --decode > private-key.asc
-
       - name: Mask GPG key
-        run: echo "::add-mask::$(cat private-key.asc)"
-
+        run: |
+          echo "${{ inputs.gpg_private_key }}" | while IFS= read -r line; do
+            echo "::add-mask::$line"
+          done
+          echo "${{ inputs.gpg_passphrase }}" | while IFS= read -r line; do
+            echo "::add-mask::$line"
+          done
+          
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
