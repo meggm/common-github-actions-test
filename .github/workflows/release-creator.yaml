@@ -68,7 +68,12 @@ jobs:
           fi
           echo "New version to be released:v$new_version"
           echo "REL_VERSION=v${new_version}" >> $GITHUB_ENV
-
+          
+      - name: Mask GPG key
+        run: |
+          echo "::add-mask::${{ inputs.gpg_private_key }}"
+          echo "::add-mask::${{ inputs.gpg_passphrase }}"
+          
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
