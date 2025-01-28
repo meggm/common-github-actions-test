@@ -73,15 +73,15 @@ jobs:
           
       - name: Create new tag
         run: |
-          git tag -s -a v${{ github.event.actions.set-version.outputs.version }} -m "Release v${{ github.event.inputs.version }}"
-          git push origin v${{ github.event.inputs.version }}
+          git tag -s -a v${{ github.event.actions.set-version.outputs.version }} -m "Release v${{ inputs.version }}"
+          git push origin v${{ inputs.version }}
 
       - name: Create Release
         id: release_notes
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Release v${{ github.event.inputs.version }}
+          tag_name: v${{ inputs.version }}
+          name: Release v${{ inputs.version }}
           draft: true
           prerelease: false
           generate_release_notes: true
@@ -94,5 +94,5 @@ jobs:
 
       - name: Create release branch
         run: |
-          git checkout -b release/v${{ github.event.inputs.version }}
-          git push origin release/v${{ github.event.inputs.version }}
+          git checkout -b release/v${{ inputs.version }}
+          git push origin release/v${{ inputs.version }}
