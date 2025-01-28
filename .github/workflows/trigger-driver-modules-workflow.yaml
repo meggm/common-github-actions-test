@@ -46,7 +46,7 @@ jobs:
             {
               "ref": "${{ github.ref }}",
               "sha": "${{ github.sha }}",
-              "gpg_key": "${{ env.sanitized_key }}"
+              "gpg_key": "${{ env.sanitized_key }}",
               "passphrase": "${{ secrets.GPG_PASSPHRASE}}"
             }
 
