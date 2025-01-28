@@ -21,9 +21,6 @@ on:
         description: "List of image names. Example: csi-powerstore,csi-isilon"
         type: string
         required: true
-      gpg_key:
-        required: true
-        type: string
         
 jobs:
   build-and-scan:
@@ -52,7 +49,6 @@ jobs:
     uses: meggm/common-github-actions-test/.github/workflows/release-creator.yaml@main
     with:
       version: ${{ inputs.version }}
-      gpg_key: ${{ inputs.gpg_key }}
     secrets: inherit
 
   push-images:
