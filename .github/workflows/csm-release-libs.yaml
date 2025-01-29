@@ -6,95 +6,44 @@
 #
 #  http://www.apache.org/licenses/LICENSE-2.0
 
+# This workflow is used to release libraries like gobrick, gofsutil etc.
 name: Release Go Client Libraries
 
+# Invocable as a reusable workflow
 on:
   workflow_call:
-  workflow_dispatch:
-
+    inputs:
+      version:
+        description: 'Semantic version to release. Ex: major, minor, or patch'
+        required: true
+        type: string
 jobs:
-  build-and-release:
-    name: Build, Scan, and Release
+  build-and-scan:
+    name: Build, Scan and Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0 # Fetch the full history including tags
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-
       - name: Install dependencies
         run: go mod tidy
-
       - name: Build
         run: go build -v ./...
-
       - name: Run malware scan
         uses: dell/common-github-actions/malware-scanner@main
         with:
           directories: .
           options: -ri
 
-      - name: Get Latest Release Version
-        id: get_release
-        run: |
-          REPO="${{ github.repository }}"
-          echo "Fetching latest release for $REPO"
-          RELEASE_VERSION=$(curl -s "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
-          if [[ "$RELEASE_VERSION" == "null" ]]; then
-            echo "No release found for $REPO"
-            RELEASE_VERSION="v0.0.0"
-          fi
-          echo "Latest release version: $RELEASE_VERSION"
-          echo "::set-output name=release_version::$RELEASE_VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Calculate Next Minor Version
-        id: calculate_version
-        run: |
-          RELEASE_VERSION="${{ steps.get_release.outputs.release_version }}"
-          VERSION="${RELEASE_VERSION#v}"
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-          NEXT_MINOR=$((MINOR + 1))
-          NEW_VERSION="v$MAJOR.$NEXT_MINOR.0"
-          echo "Next version: $NEW_VERSION"
-          echo "::set-output name=new_version::$NEW_VERSION"
-
-      - name: Output Version
-        run: echo "Determined version:${{ steps.calculate_version.outputs.new_version }}"
-
-      - name: Delete existing tag in remote
-        run: |
-          git tag -d ${{ steps.calculate_version.outputs.new_version }} || true
-          git push --delete origin ${{ steps.calculate_version.outputs.new_version }} || true
-
-      - name: Create new tag
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git tag ${{ steps.calculate_version.outputs.new_version }}
-          git push origin ${{ steps.calculate_version.outputs.new_version }}
-
-      - name: Create Release
-        id: release_notes
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.calculate_version.outputs.new_version }}
-          name: Release ${{ steps.calculate_version.outputs.new_version }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release branch
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git checkout -b release/${{ steps.calculate_version.outputs.new_version }}
-          git push origin release/${{ steps.calculate_version.outputs.new_version }}
-
+  release-and-tag:
+    name: Tag and Release
+    needs: build-and-scan
+    uses: meggm/common-github-actions-test/.github/workflows/release-creator.yaml@main
+    with:
+      version: ${{ inputs.version }}
+    secrets: inherit
