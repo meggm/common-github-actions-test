@@ -27,14 +27,6 @@ jobs:
           ]
 
     steps:
-      # Sanitize the GPG key to escape any line breaks
-      - name: Sanitize GPG Key
-        id: sanitize_key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | awk '{printf "%s\\n", $0}' > sanitized_gpg_key.txt
-          SANITIZED_KEY=$(cat sanitized_gpg_key.txt)
-          echo "sanitized_key=$SANITIZED_KEY" >> $GITHUB_ENV
-
       # Trigger the repository dispatch event
       - name: Trigger Auto Release
         uses: peter-evans/repository-dispatch@v3
