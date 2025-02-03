@@ -34,7 +34,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
-          event-type: auto-driver-module-release-workflow
+          event-type: auto-release-workflow
           client-payload: >
             {
               "ref": "${{ github.ref }}",
