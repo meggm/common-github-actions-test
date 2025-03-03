@@ -24,7 +24,8 @@ jobs:
             #"meggm/test-release-csi-powerscale",
             #"meggm/test-csi-powerflex",
             #"meggm/test-csi-powerstore",
-            "meggm/test-csi-powermax"
+            #"meggm/test-csi-powermax",
+            "meggm/test-karavi-resiliency"
           ]
 
     steps:
