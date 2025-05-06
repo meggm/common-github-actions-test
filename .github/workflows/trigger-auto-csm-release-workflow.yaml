@@ -21,23 +21,24 @@ jobs:
       matrix:
         repo:
           [
-            "dell/csi-metadata-retriever",
-            "dell/csi-powerflex",
-            "dell/csi-powermax",
-            "dell/csi-powerscale",
-            "dell/csi-powerstore",
-            "dell/csi-unity",
-            "dell/csm-metrics-powermax",
-            "dell/csm-metrics-powerscale",
-            "dell/csm-metrics-powerstore",
-            "dell/csm-metrics-unity",
-            "dell/csm-operator",
-            "dell/csm-replication",
-            "dell/karavi-authorization",
-            "dell/karavi-resiliency",
-            "dell/karavi-observability",
-            "dell/karavi-metrics-powerflex",
-            "dell/karavi-topology",
+            #"dell/csi-metadata-retriever",
+            #"dell/csi-powerflex",
+            #"dell/csi-powermax",
+            #"dell/csi-powerscale",
+            #"dell/csi-powerstore",
+            #"dell/csi-unity",
+            #"dell/csm-metrics-powermax",
+            #"dell/csm-metrics-powerscale",
+            #"dell/csm-metrics-powerstore",
+            #"dell/csm-metrics-unity",
+            #"dell/csm-operator",
+            #"dell/csm-replication",
+            #"dell/karavi-authorization",
+            #"dell/karavi-resiliency",
+            #"dell/karavi-observability",
+            #"dell/karavi-metrics-powerflex",
+            #"dell/karavi-topology",
+            "meggm/test-cert-csi",
           ]
 
     steps:
@@ -45,7 +46,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           # For token information, see: https://github.com/peter-evans/repository-dispatch/tree/main?tab=readme-ov-file#token
-          token: ${{ secrets.CSMBOT_PAT }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: auto-release-workflow
           client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
