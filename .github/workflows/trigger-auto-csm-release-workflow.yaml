@@ -21,23 +21,6 @@ jobs:
       matrix:
         repo:
           [
-            #"dell/csi-metadata-retriever",
-            #"dell/csi-powerflex",
-            #"dell/csi-powermax",
-            #"dell/csi-powerscale",
-            #"dell/csi-powerstore",
-            #"dell/csi-unity",
-            #"dell/csm-metrics-powermax",
-            #"dell/csm-metrics-powerscale",
-            #"dell/csm-metrics-powerstore",
-            #"dell/csm-metrics-unity",
-            #"dell/csm-operator",
-            #"dell/csm-replication",
-            #"dell/karavi-authorization",
-            #"dell/karavi-resiliency",
-            #"dell/karavi-observability",
-            #"dell/karavi-metrics-powerflex",
-            #"dell/karavi-topology",
             "meggm/test-cert-csi",
           ]
 
