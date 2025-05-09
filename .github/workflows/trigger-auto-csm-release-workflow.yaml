@@ -21,7 +21,7 @@ jobs:
       matrix:
         repo:
           [
-            "meggm/test-csi-powerstore",
+            "meggm/test-csm-replication",
           ]
 
     steps:
