@@ -10,7 +10,7 @@
 
 #!/bin/bash
 
-GITHUB_TOKEN=$1
+PERSONAL_ACCESS_TOKEN=$1
 REPO=$2
 EVENT_TYPE=$3
 MAX_RETRIES=5
@@ -22,7 +22,7 @@ LATEST_WORKFLOW_ID=""
 echo "Checking workflow status for ${REPO}..."
 
 # Get the latest workflow run status for the specified event type
-RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$WORKFLOWS_API_URL")
+RESPONSE=$(curl -s -H "Authorization: token $PERSONAL_ACCESS_TOKEN" "$WORKFLOWS_API_URL")
 
 # Check if the API call was successful
 if [ $? -ne 0 ]; then
@@ -46,7 +46,7 @@ if [ "$WORKFLOW_ID" != "$LATEST_WORKFLOW_ID" ]; then
   echo "fetching the recently submitted workflow..."
   for ((i=1; i<=5; i++)); do
     sleep "$POLL_INTERVAL"
-    RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$WORKFLOWS_API_URL")
+    RESPONSE=$(curl -s -H "Authorization: token $PERSONAL_ACCESS_TOKEN" "$WORKFLOWS_API_URL")
     NEW_WORKFLOW_ID=$(echo "${RESPONSE}" | jq -r '.workflow_runs[0].id')
     if [ "$NEW_WORKFLOW_ID" != "$LATEST_WORKFLOW_ID" ]; then
       LATEST_WORKFLOW_ID="$NEW_WORKFLOW_ID"
@@ -58,7 +58,7 @@ fi
 
 WORKFLOW_API_URL="https://api.github.com/repos/${REPO}/actions/runs/${WORKFLOW_ID}"
 WORKFLOW_URL="https://github.com/${REPO}/actions/runs/${WORKFLOW_ID}"
-RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$WORKFLOW_API_URL")
+RESPONSE=$(curl -s -H "Authorization: token $PERSONAL_ACCESS_TOKEN" "$WORKFLOW_API_URL")
 STATUS=$(echo "${RESPONSE}" | jq -r '.status')
 CONCLUSION=$(echo "${RESPONSE}" | jq -r '.conclusion')
 
@@ -72,7 +72,7 @@ if [ "${STATUS}" == "in_progress" ] || [ "${STATUS}" == "queued" ]; then
 
   while [ "${STATUS}" == "in_progress" ]; do
     sleep "$POLL_INTERVAL"
-    RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$WORKFLOW_API_URL")
+    RESPONSE=$(curl -s -H "Authorization: token $PERSONAL_ACCESS_TOKEN" "$WORKFLOW_API_URL")
     STATUS=$(echo "${RESPONSE}" | jq -r '.status')
     CONCLUSION=$(echo "${RESPONSE}" | jq -r '.conclusion')  
   done
