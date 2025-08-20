@@ -46,9 +46,9 @@ jobs:
             }
       - name: Check status of triggered workflows for release of ${{ matrix.repo }}
         run: |
-          curl -sfL https://raw.githubusercontent.com/dell/common-github-actions/main/.github/scripts/check_workflow_status.sh -o check_workflow_status.sh
+          curl -sfL https://raw.githubusercontent.com/dell/meggm/common-github-actions/main/.github/scripts/check_workflow_status.sh -o check_workflow_status.sh
           chmod +x check_workflow_status.sh
-          bash check_workflow_status.sh ${{ secrets.CSMBOT_PAT }} ${{ matrix.repo }} "repository_dispatch"
+          bash check_workflow_status.sh ${{ secrets.PERSONAL_ACCESS_TOKEN }} ${{ matrix.repo }} "repository_dispatch"
         shell: bash
 
   release_dependent_repo:
@@ -72,8 +72,9 @@ jobs:
             }
       - name: Check status of triggered workflows for release of ${{ matrix.repo }}
         run: |
-          curl -sfL https://raw.githubusercontent.com/dell/common-github-actions/main/.github/scripts/check_workflow_status.sh -o check_workflow_status.sh
+          curl -sfL https://raw.githubusercontent.com/meggm/dell/common-github-actions/main/.github/scripts/check_workflow_status.sh -o check_workflow_status.sh
           chmod +x check_workflow_status.sh
-          bash check_workflow_status.sh ${{ secrets.CSMBOT_PAT }} ${{ matrix.repo }} "repository_dispatch"
+          bash check_workflow_status.sh ${{ secrets.PERSONAL_ACCESS_TOKEN }} ${{ matrix.repo }} "repository_dispatch"
         shell: bash
+
 
