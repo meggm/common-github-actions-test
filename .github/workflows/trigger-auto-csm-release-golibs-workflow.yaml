@@ -36,7 +36,7 @@ jobs:
         id: release
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.CSMBOT_PAT }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: release-go-libs
           client-payload: |
@@ -62,7 +62,7 @@ jobs:
       - name: Trigger Release of ${{ matrix.repo }}
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.CSMBOT_PAT }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: release-go-libs
           client-payload: |
@@ -76,3 +76,4 @@ jobs:
           chmod +x check_workflow_status.sh
           bash check_workflow_status.sh ${{ secrets.CSMBOT_PAT }} ${{ matrix.repo }} "repository_dispatch"
         shell: bash
+
