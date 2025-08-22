@@ -21,6 +21,8 @@ jobs:
         repo:
           [
             "meggm/test-goiscsi",
+            "meggm/test-gounity",
+            "meggm/test-goscaleio-release",
            # "dell/gonvme",
            # "dell/gocsi",
            # "dell/gofsutil",
@@ -76,6 +78,7 @@ jobs:
  #         chmod +x check_workflow_status.sh
  #         bash check_workflow_status.sh ${{ secrets.PERSONAL_ACCESS_TOKEN }} ${{ matrix.repo }} "repository_dispatch"
  #       shell: bash
+
 
 
 
